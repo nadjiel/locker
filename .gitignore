@@ -14,3 +14,9 @@ export_presets.cfg
 .mono/
 data_*/
 mono_crash.*.json
+
+# Locker ignores
+/addons/locker/config.cfg
+/saves/
+/test/saves/*
+/examples/**/saves/
