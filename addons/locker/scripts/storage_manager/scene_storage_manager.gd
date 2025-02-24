@@ -14,34 +14,34 @@ extends LokStorageManager
 
 #region Properties
 
-## The [member global_manager] property should not be altered since it's just
+## The [member _global_manager] property should not be altered since it's just
 ## a reference to the [LokGlobalStorageManager] autoload. [br]
 ## Its reference is stored here instead of called directly to make
 ## mocking it with unit testing easier.
-var global_manager: LokStorageManager = LokGlobalStorageManager:
-	set = set_global_manager,
-	get = get_global_manager
+var _global_manager: LokStorageManager = LokGlobalStorageManager:
+	set = _set_global_manager,
+	get = _get_global_manager
 
 #endregion
 
 #region Setters & Getters
 
-func set_global_manager(new_manager: LokStorageManager) -> void:
-	global_manager = new_manager
+func _set_global_manager(new_manager: LokStorageManager) -> void:
+	_global_manager = new_manager
 
-func get_global_manager() -> LokStorageManager:
-	return global_manager
+func _get_global_manager() -> LokStorageManager:
+	return _global_manager
 
 #endregion
 
 #region Debug methods
 
-## The [method push_error_no_manager] method pushes an error indicating
-## that no [LokGlobalStorageManager] was found in the [member global_manager]
+## The [method _push_error_no_manager] method pushes an error indicating
+## that no [LokGlobalStorageManager] was found in the [member _global_manager]
 ## property, which shouldn't happen if that property wasn't altered, as
 ## recommended in its description.
-func push_error_no_manager() -> void:
-	push_error("No GlobalManager found in %s" % get_readable_name())
+func _push_error_no_manager() -> void:
+	push_error("No GlobalManager found in %s" % _get_readable_name())
 
 #endregion
 
@@ -63,13 +63,13 @@ func save_data(
 	included_accessors: Array[LokStorageAccessor] = accessors,
 	replace: bool = false
 ) -> Dictionary:
-	if global_manager == null:
-		push_error_no_manager()
+	if _global_manager == null:
+		_push_error_no_manager()
 		return {}
 	
 	saving_started.emit()
 	
-	var result: Dictionary = await global_manager.save_data(
+	var result: Dictionary = await _global_manager.save_data(
 		file_id,
 		version_number,
 		included_accessors,
@@ -96,13 +96,13 @@ func load_data(
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	if global_manager == null:
-		push_error_no_manager()
+	if _global_manager == null:
+		_push_error_no_manager()
 		return {}
 	
 	loading_started.emit()
 	
-	var result: Dictionary = await global_manager.load_data(
+	var result: Dictionary = await _global_manager.load_data(
 		file_id,
 		included_accessors,
 		partition_ids,
@@ -129,13 +129,13 @@ func read_data(
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	if global_manager == null:
-		push_error_no_manager()
+	if _global_manager == null:
+		_push_error_no_manager()
 		return {}
 	
 	reading_started.emit()
 	
-	var result: Dictionary = await global_manager.read_data(
+	var result: Dictionary = await _global_manager.read_data(
 		file_id,
 		included_accessors,
 		partition_ids,
@@ -162,13 +162,13 @@ func remove_data(
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	if global_manager == null:
-		push_error_no_manager()
+	if _global_manager == null:
+		_push_error_no_manager()
 		return {}
 	
 	removing_started.emit()
 	
-	var result: Dictionary = await global_manager.remove_data(
+	var result: Dictionary = await _global_manager.remove_data(
 		file_id,
 		included_accessors,
 		partition_ids,

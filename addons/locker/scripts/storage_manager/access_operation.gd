@@ -24,15 +24,23 @@ signal started()
 ## operation.
 signal finished(result: Dictionary)
 
-## The [member callable] property of this [LokAccessOperation] represents
+## The [member _callable] property of this [LokAccessOperation] represents
 ## a [Callable] that is executed in order for this [LokAccessOperation] to
 ## execute. [br]
 ## This [Callable] is supposed to return a [Dictionary] with the result of
 ## this [LokAccessOperation].
-var callable: Callable
+var _callable: Callable:
+	set = _set_callable,
+	get = _get_callable
 
-func _init(_callable: Callable) -> void:
-	callable = _callable
+func _set_callable(new_callable: Callable) -> void:
+	_callable = new_callable
+
+func _get_callable() -> Callable:
+	return _callable
+
+func _init(callable: Callable) -> void:
+	_callable = callable
 
 ## The [method operate] is the main point of execution of this
 ## [LokAccessOperation]. [br]
@@ -42,7 +50,7 @@ func _init(_callable: Callable) -> void:
 func operate() -> Dictionary:
 	started.emit.call_deferred()
 	
-	var result: Dictionary = callable.call()
+	var result: Dictionary = _callable.call()
 	
 	finished.emit.call_deferred(result)
 	

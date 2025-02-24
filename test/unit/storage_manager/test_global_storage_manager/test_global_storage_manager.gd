@@ -46,14 +46,14 @@ func test_initializes_with_project_settings() -> void:
 	assert_eq(save_files_prefix, expected_save_files_prefix, "Unexpected value")
 	assert_eq(save_files_format, expected_save_files_format, "Unexpected value")
 	assert_eq(save_versions, expected_save_versions, "Unexpected value")
-	assert_eq(LockerPlugin.strategy_to_string(access_strategy), expected_access_strategy, "Unexpected value")
+	assert_eq(LockerPlugin._strategy_to_string(access_strategy), expected_access_strategy, "Unexpected value")
 	
 	if expected_access_strategy == "Encrypted":
 		assert_eq(encrypted_strategy_password, expected_encrypted_strategy_password, "Unexpected value")
 
 #endregion
 
-#region Method get_file_path
+#region Method _get_file_path
 
 func test_get_file_path_returns_default_path() -> void:
 	manager.saves_directory = "res://tests/saves/"
@@ -61,7 +61,7 @@ func test_get_file_path_returns_default_path() -> void:
 	
 	var expected: String = "res://tests/saves/file"
 	
-	assert_eq(manager.get_file_path(""), expected, "Unexpected result")
+	assert_eq(manager._get_file_path(""), expected, "Unexpected result")
 
 func test_get_file_path_returns_path_based_on_id() -> void:
 	manager.saves_directory = "res://tests/saves/"
@@ -69,7 +69,7 @@ func test_get_file_path_returns_path_based_on_id() -> void:
 	
 	var expected: String = "res://tests/saves/file_1"
 	
-	assert_eq(manager.get_file_path("1"), expected, "Unexpected result")
+	assert_eq(manager._get_file_path("1"), expected, "Unexpected result")
 
 #endregion
 
@@ -337,27 +337,27 @@ func test_distribute_result_sends_according_to_ids() -> void:
 #region Method get_saved_files_ids
 
 func test_get_saved_files_ids_passes_to_executor() -> void:
-	manager.access_executor = DoubledAccessExecutor.new()
+	manager._access_executor = DoubledAccessExecutor.new()
 	
 	manager.get_saved_files_ids()
 	
-	assert_called(manager.access_executor, "request_get_file_ids")
+	assert_called(manager._access_executor, "request_get_file_ids")
 
 #endregion
 
 #region Method save_data
 
 func test_save_data_passes_to_executor() -> void:
-	manager.access_executor = DoubledAccessExecutor.new()
+	manager._access_executor = DoubledAccessExecutor.new()
 	
 	manager.save_data()
 	
-	assert_called(manager.access_executor, "request_saving")
+	assert_called(manager._access_executor, "request_saving")
 
 func test_save_data_emits_saving_started() -> void:
 	watch_signals(manager)
 	
-	manager.access_executor = DoubledAccessExecutor.new()
+	manager._access_executor = DoubledAccessExecutor.new()
 	
 	manager.save_data()
 	
@@ -366,7 +366,7 @@ func test_save_data_emits_saving_started() -> void:
 func test_save_data_emits_saving_finished() -> void:
 	watch_signals(manager)
 	
-	manager.access_executor = DoubledAccessExecutor.new()
+	manager._access_executor = DoubledAccessExecutor.new()
 	
 	manager.save_data()
 	
@@ -377,16 +377,16 @@ func test_save_data_emits_saving_finished() -> void:
 #region Method load_data
 
 func test_load_data_passes_to_executor() -> void:
-	manager.access_executor = DoubledAccessExecutor.new()
+	manager._access_executor = DoubledAccessExecutor.new()
 	
 	manager.load_data()
 	
-	assert_called(manager.access_executor, "request_loading")
+	assert_called(manager._access_executor, "request_loading")
 
 func test_save_data_emits_loading_started() -> void:
 	watch_signals(manager)
 	
-	manager.access_executor = DoubledAccessExecutor.new()
+	manager._access_executor = DoubledAccessExecutor.new()
 	
 	manager.load_data()
 	
@@ -395,7 +395,7 @@ func test_save_data_emits_loading_started() -> void:
 func test_save_data_emits_loading_finished() -> void:
 	watch_signals(manager)
 	
-	manager.access_executor = DoubledAccessExecutor.new()
+	manager._access_executor = DoubledAccessExecutor.new()
 	
 	manager.load_data()
 	
@@ -406,16 +406,16 @@ func test_save_data_emits_loading_finished() -> void:
 #region Method read_data
 
 func test_read_data_passes_to_executor() -> void:
-	manager.access_executor = DoubledAccessExecutor.new()
+	manager._access_executor = DoubledAccessExecutor.new()
 	
 	manager.read_data()
 	
-	assert_called(manager.access_executor, "request_loading")
+	assert_called(manager._access_executor, "request_loading")
 
 func test_read_data_emits_reading_started() -> void:
 	watch_signals(manager)
 	
-	manager.access_executor = DoubledAccessExecutor.new()
+	manager._access_executor = DoubledAccessExecutor.new()
 	
 	manager.read_data()
 	
@@ -424,7 +424,7 @@ func test_read_data_emits_reading_started() -> void:
 func test_read_data_emits_reading_finished() -> void:
 	watch_signals(manager)
 	
-	manager.access_executor = DoubledAccessExecutor.new()
+	manager._access_executor = DoubledAccessExecutor.new()
 	
 	manager.read_data()
 	
@@ -435,16 +435,16 @@ func test_read_data_emits_reading_finished() -> void:
 #region Method remove_data
 
 func test_remove_data_passes_to_executor() -> void:
-	manager.access_executor = DoubledAccessExecutor.new()
+	manager._access_executor = DoubledAccessExecutor.new()
 	
 	manager.remove_data()
 	
-	assert_called(manager.access_executor, "request_removing")
+	assert_called(manager._access_executor, "request_removing")
 
 func test_save_data_emits_removing_started() -> void:
 	watch_signals(manager)
 	
-	manager.access_executor = DoubledAccessExecutor.new()
+	manager._access_executor = DoubledAccessExecutor.new()
 	
 	manager.remove_data()
 	
@@ -453,7 +453,7 @@ func test_save_data_emits_removing_started() -> void:
 func test_save_data_emits_removing_finished() -> void:
 	watch_signals(manager)
 	
-	manager.access_executor = DoubledAccessExecutor.new()
+	manager._access_executor = DoubledAccessExecutor.new()
 	
 	manager.remove_data()
 	

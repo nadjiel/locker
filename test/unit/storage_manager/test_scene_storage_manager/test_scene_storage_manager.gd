@@ -12,7 +12,7 @@ func before_all() -> void:
 
 func before_each() -> void:
 	manager = add_child_autofree(SceneStorageManager.new())
-	manager.global_manager = DoubledStorageManager.new()
+	manager._global_manager = DoubledStorageManager.new()
 
 func after_all() -> void:
 	queue_free()
@@ -22,7 +22,7 @@ func after_all() -> void:
 func test_save_data_passes_to_global_manager() -> void:
 	manager.save_data()
 	
-	assert_called(manager.global_manager, "save_data")
+	assert_called(manager._global_manager, "save_data")
 
 func test_save_data_emits_saving_started_signal() -> void:
 	watch_signals(manager)
@@ -45,7 +45,7 @@ func test_save_data_emits_saving_finished_signal() -> void:
 func test_load_data_passes_to_global_manager() -> void:
 	manager.load_data()
 	
-	assert_called(manager.global_manager, "load_data")
+	assert_called(manager._global_manager, "load_data")
 
 func test_load_data_emits_loading_started_signal() -> void:
 	watch_signals(manager)
@@ -68,7 +68,7 @@ func test_load_data_emits_loading_finished_signal() -> void:
 func test_read_data_passes_to_global_manager() -> void:
 	manager.read_data()
 	
-	assert_called(manager.global_manager, "read_data")
+	assert_called(manager._global_manager, "read_data")
 
 func test_read_data_emits_reading_started_signal() -> void:
 	watch_signals(manager)
@@ -91,7 +91,7 @@ func test_read_data_emits_reading_finished_signal() -> void:
 func test_remove_data_passes_to_global_manager() -> void:
 	manager.remove_data()
 	
-	assert_called(manager.global_manager, "remove_data")
+	assert_called(manager._global_manager, "remove_data")
 
 func test_remove_data_emits_removing_started_signal() -> void:
 	watch_signals(manager)

@@ -51,12 +51,12 @@ var save_versions: bool = LockerPlugin.get_setting_save_versions():
 	set = set_save_versions,
 	get = get_save_versions
 
-## The [member access_executor] property stores a [LokAccessExecutor] that
+## The [member _access_executor] property stores a [LokAccessExecutor] that
 ## is responsible for separating the save files' operations in a separate
 ## [Thread] so that they can be used asynchronously.
-var access_executor: LokAccessExecutor = LokAccessExecutor.new():
-	set = set_access_executor,
-	get = get_access_executor
+var _access_executor: LokAccessExecutor = LokAccessExecutor.new():
+	set = _set_access_executor,
+	get = _get_access_executor
 
 #endregion
 
@@ -86,90 +86,50 @@ func set_save_versions(new_value: bool) -> void:
 func get_save_versions() -> bool:
 	return save_versions
 
-func set_access_executor(new_executor: LokAccessExecutor) -> void:
-	access_executor = new_executor
+func _set_access_executor(new_executor: LokAccessExecutor) -> void:
+	_access_executor = new_executor
 
-func get_access_executor() -> LokAccessExecutor:
-	return access_executor
+func _get_access_executor() -> LokAccessExecutor:
+	return _access_executor
 
 ## The [method set_access_strategy] method allows quickly setting the
-## [LokAccessStrategy] of the [member access_executor], if it is not
+## [LokAccessStrategy] of the [member _access_executor], if it is not
 ## [code]null[/code].
 func set_access_strategy(new_strategy: LokAccessStrategy) -> void:
-	if access_executor == null:
-		push_error_no_executor()
+	if _access_executor == null:
+		_push_error_no_executor()
 		return
 	
-	access_executor.access_strategy = new_strategy
+	_access_executor.access_strategy = new_strategy
 
 ## The [method get_access_strategy] method allows quickly getting the
-## [LokAccessStrategy] of the [member access_executor].
+## [LokAccessStrategy] of the [member _access_executor].
 func get_access_strategy() -> LokAccessStrategy:
-	if access_executor == null:
-		push_error_no_executor()
+	if _access_executor == null:
+		_push_error_no_executor()
 		return
 	
-	return access_executor.access_strategy
-
-#endregion
-
-#region Debug Methods
-
-## The [method push_error_no_executor] method pushes an error saying
-## that no [LokAccessExecutor] was found in this class.
-func push_error_no_executor() -> void:
-	push_error("%s: No AccessExecutor found in %s" % [
-		error_string(Error.ERR_UNCONFIGURED),
-		get_readable_name()
-	])
+	return _access_executor.access_strategy
 
 #endregion
 
 #region Methods
 
-## The [method get_accessor_ids] method returns an [Array] of [String]s
-## representing the ids from the [LokStorageAccessor]s received in the
-## [param from_accessors] parameter.
-func get_accessor_ids(
-	from_accessors: Array[LokStorageAccessor]
-) -> Array[String]:
-	var accessor_ids: Array[String] = []
+# Initializes values according to ProjectSettings
+func _init() -> void:
+	set_access_strategy(LockerPlugin.get_setting_access_strategy_parsed())
 	
-	for accessor: LokStorageAccessor in from_accessors:
-		accessor_ids.append(accessor.id)
+	var access_strategy: LokAccessStrategy = get_access_strategy()
 	
-	return accessor_ids
+	if access_strategy != null:
+		access_strategy.set(
+			&"password",
+			LockerPlugin.get_setting_encrypted_strategy_password()
+		)
 
-## The [method get_file_name] method returns a [String] with the name of
-## a file that has [param file_id] as its id. [br]
-## If [param file_id] is an empty [String], the file name defaults to the
-## [member save_files_prefix]. [br]
-## If that property is an empty [String], then the file name equals to the
-## [param file_id]. [br]
-## If both are not empty [String], then the file name equals to a nicely
-## concatenated [code]<save_files_prefix>_<file_id>[/code].
-func get_file_name(file_id: String) -> String:
-	if file_id == "":
-		return save_files_prefix
-	if save_files_prefix == "":
-		return file_id
-	
-	return "%s_%s" % [ save_files_prefix, file_id ]
-
-## The [method get_file_path] method returns a [String] with the path of
-## a file that has [param file_id] as its id. [br]
-## If both the [member save_files_prefix] and the [param file_id] are empty
-## [String]s, then the file path will return an empty [String] to avoid
-## that the [member saves_directory] is used as a file.
-func get_file_path(file_id: String) -> String:
-	var file_name: String = get_file_name(file_id)
-	
-	if file_name == "":
-		return ""
-	
-	var file_path: String = saves_directory.path_join(file_name)
-	
-	return file_path
+# Finalizes AccessExecutor's Thread
+func _exit_tree() -> void:
+	_access_executor.finish_execution()
 
 ## The [method collect_data] method is used to get and organize the data
 ## from an [param accessor]. [br]
@@ -306,7 +266,7 @@ func distribute_result(
 ## The [method get_saved_files_ids] method returns an [Array] of [String]s
 ## with the ids of all files saved in the [member saves_directory].
 func get_saved_files_ids() -> Array[String]:
-	var result: Dictionary = await access_executor.request_get_file_ids(
+	var result: Dictionary = await _access_executor.request_get_file_ids(
 		saves_directory
 	)
 	
@@ -327,14 +287,14 @@ func save_data(
 	if file_id == "" and current_file != "":
 		file_id = current_file
 	
-	var file_path: String = get_file_path(file_id)
+	var file_path: String = _get_file_path(file_id)
 	var file_format: String = save_files_format
 	
 	var data: Dictionary = gather_data(included_accessors, version_number)
 	
 	saving_started.emit()
 	
-	var result: Dictionary = await access_executor.request_saving(
+	var result: Dictionary = await _access_executor.request_saving(
 		file_path, file_format, data, replace
 	)
 	
@@ -357,14 +317,14 @@ func load_data(
 	if file_id == "" and current_file != "":
 		file_id = current_file
 	
-	var file_path: String = get_file_path(file_id)
+	var file_path: String = _get_file_path(file_id)
 	var file_format: String = save_files_format
 	
-	var accessor_ids: Array[String] = get_accessor_ids(included_accessors)
+	var accessor_ids: Array[String] = _get_accessor_ids(included_accessors)
 	
 	loading_started.emit()
 	
-	var result: Dictionary = await access_executor.request_loading(
+	var result: Dictionary = await _access_executor.request_loading(
 		file_path,
 		file_format,
 		partition_ids,
@@ -393,14 +353,14 @@ func read_data(
 	if file_id == "" and current_file != "":
 		file_id = current_file
 	
-	var file_path: String = get_file_path(file_id)
+	var file_path: String = _get_file_path(file_id)
 	var file_format: String = save_files_format
 	
-	var accessor_ids: Array[String] = get_accessor_ids(included_accessors)
+	var accessor_ids: Array[String] = _get_accessor_ids(included_accessors)
 	
 	reading_started.emit()
 	
-	var result: Dictionary = await access_executor.request_loading(
+	var result: Dictionary = await _access_executor.request_loading(
 		file_path, file_format, partition_ids, accessor_ids, version_numbers
 	)
 	
@@ -423,14 +383,14 @@ func remove_data(
 	if file_id == "" and current_file != "":
 		file_id = current_file
 	
-	var file_path: String = get_file_path(file_id)
+	var file_path: String = _get_file_path(file_id)
 	var file_format: String = save_files_format
 	
-	var accessor_ids: Array[String] = get_accessor_ids(included_accessors)
+	var accessor_ids: Array[String] = _get_accessor_ids(included_accessors)
 	
 	removing_started.emit()
 	
-	var result: Dictionary = await access_executor.request_removing(
+	var result: Dictionary = await _access_executor.request_removing(
 		file_path, file_format, partition_ids, accessor_ids, version_numbers
 	)
 	
@@ -438,20 +398,60 @@ func remove_data(
 	
 	return result
 
-# Initializes values according to ProjectSettings
-func _init() -> void:
-	set_access_strategy(LockerPlugin.get_setting_access_strategy_parsed())
+## The [method _get_accessor_ids] method returns an [Array] of [String]s
+## representing the ids from the [LokStorageAccessor]s received in the
+## [param from_accessors] parameter.
+func _get_accessor_ids(
+	from_accessors: Array[LokStorageAccessor]
+) -> Array[String]:
+	var accessor_ids: Array[String] = []
 	
-	var access_strategy: LokAccessStrategy = get_access_strategy()
+	for accessor: LokStorageAccessor in from_accessors:
+		accessor_ids.append(accessor.id)
 	
-	if access_strategy != null:
-		access_strategy.set(
-			&"password",
-			LockerPlugin.get_setting_encrypted_strategy_password()
-		)
+	return accessor_ids
 
-# Finalizes AccessExecutor's Thread
-func _exit_tree() -> void:
-	access_executor.finish_execution()
+## The [method _get_file_name] method returns a [String] with the name of
+## a file that has [param file_id] as its id. [br]
+## If [param file_id] is an empty [String], the file name defaults to the
+## [member save_files_prefix]. [br]
+## If that property is an empty [String], then the file name equals to the
+## [param file_id]. [br]
+## If both are not empty [String], then the file name equals to a nicely
+## concatenated [code]<save_files_prefix>_<file_id>[/code].
+func _get_file_name(file_id: String) -> String:
+	if file_id == "":
+		return save_files_prefix
+	if save_files_prefix == "":
+		return file_id
+	
+	return "%s_%s" % [ save_files_prefix, file_id ]
+
+## The [method _get_file_path] method returns a [String] with the path of
+## a file that has [param file_id] as its id. [br]
+## If both the [member save_files_prefix] and the [param file_id] are empty
+## [String]s, then the file path will return an empty [String] to avoid
+## that the [member saves_directory] is used as a file.
+func _get_file_path(file_id: String) -> String:
+	var file_name: String = _get_file_name(file_id)
+	
+	if file_name == "":
+		return ""
+	
+	var file_path: String = saves_directory.path_join(file_name)
+	
+	return file_path
+
+#endregion
+
+#region Debug Methods
+
+## The [method _push_error_no_executor] method pushes an error saying
+## that no [LokAccessExecutor] was found in this class.
+func _push_error_no_executor() -> void:
+	push_error("%s: No AccessExecutor found in %s" % [
+		error_string(Error.ERR_UNCONFIGURED),
+		_get_readable_name()
+	])
 
 #endregion

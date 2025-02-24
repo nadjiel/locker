@@ -82,21 +82,6 @@ func get_current_file() -> String:
 
 #endregion
 
-#region Debug Methods
-
-## The [method get_readable_name] method is a utility for debugging. [br]
-## It returns a more user friendly name for this node, so that errors
-## can use it to be clearer.
-func get_readable_name() -> String:
-	if is_inside_tree():
-		return str(get_path())
-	if name != "":
-		return name
-	
-	return str(self)
-
-#endregion
-
 #region Methods
 
 ## The [method save_data] method should save the information from all active
@@ -209,5 +194,20 @@ func remove_data(
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary: return {}
+
+#endregion
+
+#region Debug Methods
+
+## The [method _get_readable_name] method is a utility for debugging. [br]
+## It returns a more user friendly name for this node, so that errors
+## can use it to be clearer.
+func _get_readable_name() -> String:
+	if is_inside_tree():
+		return str(get_path())
+	if name != "":
+		return name
+	
+	return str(self)
 
 #endregion

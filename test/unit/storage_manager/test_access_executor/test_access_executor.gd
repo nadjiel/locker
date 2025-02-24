@@ -65,7 +65,7 @@ func before_each() -> void:
 	executor = AccessExecutor.new(DoubledAccessStrategy.new())
 
 func after_each() -> void:
-	if executor.thread.is_alive():
+	if executor._thread.is_alive():
 		executor.finish_execution()
 
 func after_all() -> void:
@@ -74,12 +74,12 @@ func after_all() -> void:
 #region General behavior
 
 func test_starts_thread_on_creation() -> void:
-	assert_true(executor.thread.is_alive(), "Executor didn't start thread")
+	assert_true(executor._thread.is_alive(), "Executor didn't start thread")
 
 func test_keeps_executing_after_one_second() -> void:
 	await wait_seconds(1.0, "Waiting thread execution")
 	
-	assert_true(executor.thread.is_alive(), "Executor stopped thread")
+	assert_true(executor._thread.is_alive(), "Executor stopped thread")
 
 func test_operations_can_be_awaited() -> void:
 	var expected_result: Dictionary = { "status": Error.OK, "data": "saved" }
@@ -151,7 +151,7 @@ func test_operation_finished_signal_is_emitted_with_queued_operations() -> void:
 func test_finish_execution_stops_thread() -> void:
 	await executor.finish_execution()
 	
-	assert_false(executor.thread.is_alive())
+	assert_false(executor._thread.is_alive())
 
 #endregion
 

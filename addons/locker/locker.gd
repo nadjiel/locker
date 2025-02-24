@@ -42,14 +42,14 @@ const STRATEGY_SCRIPTS_PATH := "res://addons/locker/scripts/access_strategy/defa
 
 #region Settings
 
-## The [member strategy_scripts] property stores references to the [Script]s
+## The [member _strategy_scripts] property stores references to the [Script]s
 ## of the [LokAccessStrategy]s that the [LockerPlugin] knows thanks
 ## to the path in the [constant STRATEGY_SCRIPTS_PATH] constant.
-static var strategy_scripts: Array[Script] = load_strategy_scripts():
-	set = set_strategy_scripts,
-	get = get_strategy_scripts
+static var _strategy_scripts: Array[Script] = _load_strategy_scripts():
+	set = _set_strategy_scripts,
+	get = _get_strategy_scripts
 
-## The [member plugin_settings] property stores a [Dictionary] that describes
+## The [member _plugin_settings] property stores a [Dictionary] that describes
 ## all the settings that should be appended to the [ProjectSettings] when
 ## the [LockerPlugin] is activated, so that they can be easily edited through
 ## the editor. [br]
@@ -91,12 +91,12 @@ static var strategy_scripts: Array[Script] = load_strategy_scripts():
 ## [String] that represents what [LokAccessStrategy] the
 ## [LokGlobalStorageManager] should use to save and load data. To convert
 ## from this [String] representation to an actual [LokAccessStrategy] instance,
-## the [method string_to_strategy] method can be used. [br]
+## the [method _string_to_strategy] method can be used. [br]
 ## - [code]"addons/locker/encrypted_strategy/password"[/code]: This setting
 ## stores the default password that should be used by the
 ## [LokGlobalStorageManager]'s strategy, if it is the
 ## [LokEncryptedAccessStrategy].
-static var plugin_settings := {
+static var _plugin_settings := {
 	"addons/locker/saves_directory": {
 		"default_value": "user://saves/",
 		"current_value": "user://saves/",
@@ -165,8 +165,8 @@ static var plugin_settings := {
 		"config_section": "EncryptedStrategy"
 	}
 }:
-	set = set_plugin_settings,
-	get = get_plugin_settings
+	set = _set_plugin_settings,
+	get = _get_plugin_settings
 
 #endregion
 
@@ -184,7 +184,7 @@ static func set_setting_saves_directory(path: String) -> void:
 static func get_setting_saves_directory() -> String:
 	return ProjectSettings.get_setting(
 		"addons/locker/saves_directory",
-		plugin_settings["addons/locker/saves_directory"]["default_value"]
+		_plugin_settings["addons/locker/saves_directory"]["default_value"]
 	)
 
 ## The [method set_setting_save_files_prefix] method is a shortcut to
@@ -199,7 +199,7 @@ static func set_setting_save_files_prefix(prefix: String) -> void:
 static func get_setting_save_files_prefix() -> String:
 	return ProjectSettings.get_setting(
 		"addons/locker/save_files_prefix",
-		plugin_settings["addons/locker/save_files_prefix"]["default_value"]
+		_plugin_settings["addons/locker/save_files_prefix"]["default_value"]
 	)
 
 ## The [method set_setting_save_files_format] method is a shortcut to
@@ -214,7 +214,7 @@ static func set_setting_save_files_format(format: String) -> void:
 static func get_setting_save_files_format() -> String:
 	return ProjectSettings.get_setting(
 		"addons/locker/save_files_format",
-		plugin_settings["addons/locker/save_files_format"]["default_value"]
+		_plugin_settings["addons/locker/save_files_format"]["default_value"]
 	)
 
 ## The [method set_setting_save_versions] method is a shortcut to
@@ -229,7 +229,7 @@ static func set_setting_save_versions(state: bool) -> void:
 static func get_setting_save_versions() -> bool:
 	return ProjectSettings.get_setting(
 		"addons/locker/save_versions",
-		plugin_settings["addons/locker/save_versions"]["default_value"]
+		_plugin_settings["addons/locker/save_versions"]["default_value"]
 	)
 
 ## The [method set_setting_access_strategy] method is a shortcut to
@@ -244,14 +244,14 @@ static func set_setting_access_strategy(strategy: String) -> void:
 static func get_setting_access_strategy() -> String:
 	return ProjectSettings.get_setting(
 		"addons/locker/access_strategy",
-		plugin_settings["addons/locker/access_strategy"]["default_value"]
+		_plugin_settings["addons/locker/access_strategy"]["default_value"]
 	)
 
 ## The [method get_setting_access_strategy_parsed] method is a getter to
 ## facilitate obtaining the [code]"addons/locker/access_strategy"[/code]
 ## setting from the [ProjectSettings] already parsed as a [LokAccessStrategy].
 static func get_setting_access_strategy_parsed() -> LokAccessStrategy:
-	return string_to_strategy(get_setting_access_strategy())
+	return _string_to_strategy(get_setting_access_strategy())
 
 ## The [method set_setting_encrypted_strategy_password] method is a shortcut to
 ## defining the [code]"addons/locker/encrypted_strategy/password"[/code] setting
@@ -268,33 +268,49 @@ static func set_setting_encrypted_strategy_password(password: String) -> void:
 static func get_setting_encrypted_strategy_password() -> String:
 	return ProjectSettings.get_setting(
 		"addons/locker/encrypted_strategy/password",
-		plugin_settings["addons/locker/encrypted_strategy/password"]["default_value"]
+		_plugin_settings["addons/locker/encrypted_strategy/password"]["default_value"]
 	)
 
 #endregion
 
 #region Setters & Getters
 
-static func set_strategy_scripts(new_scripts: Array[Script]) -> void:
-	strategy_scripts = new_scripts
+static func _set_strategy_scripts(new_scripts: Array[Script]) -> void:
+	_strategy_scripts = new_scripts
 
-static func get_strategy_scripts() -> Array[Script]:
-	return strategy_scripts
+static func _get_strategy_scripts() -> Array[Script]:
+	return _strategy_scripts
 
-static func set_plugin_settings(new_settings: Dictionary) -> void:
-	plugin_settings = new_settings
+static func _set_plugin_settings(new_settings: Dictionary) -> void:
+	_plugin_settings = new_settings
 
-static func get_plugin_settings() -> Dictionary:
-	return plugin_settings
+static func _get_plugin_settings() -> Dictionary:
+	return _plugin_settings
 
 #endregion
 
 #region Methods
 
-## The [method load_strategy_scripts] method returns an [Array] of
+# Registers plugin's autoload and settings.
+func _enter_tree() -> void:
+	_start_plugin()
+
+# Unregisters plugin's autoload and settings.
+func _exit_tree() -> void:
+	_finish_plugin()
+
+# Registers plugin's autoload and settings.
+func _enable_plugin() -> void:
+	_start_plugin()
+
+# Unregisters plugin's autoload and settings.
+func _disable_plugin() -> void:
+	_finish_plugin()
+
+## The [method _load_strategy_scripts] method returns an [Array] of
 ## [Script]s with the scripts that could be found in the path
 ## pointed by the [constant STRATEGY_SCRIPTS_PATH] constant.
-static func load_strategy_scripts() -> Array[Script]:
+static func _load_strategy_scripts() -> Array[Script]:
 	var scripts: Array[Script] = []
 	
 	for resource: Resource in LokFileSystemUtil.load_resources(STRATEGY_SCRIPTS_PATH):
@@ -305,13 +321,13 @@ static func load_strategy_scripts() -> Array[Script]:
 	
 	return scripts
 
-## The [method get_strategies] method returns an [Array] of
+## The [method _get_strategies] method returns an [Array] of
 ## [LokAccessStrategy] instances got from the [Script]s in the
-## [member strategy_scripts] property.
-static func get_strategies() -> Array[LokAccessStrategy]:
+## [member _strategy_scripts] property.
+static func _get_strategies() -> Array[LokAccessStrategy]:
 	var strategies: Array[LokAccessStrategy] = []
 	
-	for script: Script in strategy_scripts:
+	for script: Script in _strategy_scripts:
 		var strategy: Object = script.new()
 		
 		if strategy is LokAccessStrategy:
@@ -319,13 +335,13 @@ static func get_strategies() -> Array[LokAccessStrategy]:
 	
 	return strategies
 
-## The [method get_strategies_enum_string] method parses the
+## The [method _get_strategies_enum_string] method parses the
 ## [LokAccessStrategy]s that the [LockerPlugin] knows into a [String]
 ## that describes them in a way compatible with [code]hint_string[/code]s.
-static func get_strategies_enum_string() -> String:
+static func _get_strategies_enum_string() -> String:
 	var result: String = ""
 	
-	var strategies: Array[LokAccessStrategy] = get_strategies()
+	var strategies: Array[LokAccessStrategy] = _get_strategies()
 	
 	for i: int in strategies.size():
 		var strategy: LokAccessStrategy = strategies[i]
@@ -337,17 +353,17 @@ static func get_strategies_enum_string() -> String:
 	
 	return result
 
-## The [method get_default_strategy_name] method tries to get the
+## The [method _get_default_strategy_name] method tries to get the
 ## name of the [LokAccessStrategy] specified by the [param wanted_name]
 ## parameter, so that name can be used in the [ProjectSettings] as the
 ## default choice in the strategies enum. [br]
 ## If there's no such [LokAccessStrategy] known by the [LockerPlugin], this
 ## method will return any [LokAccessStrategy] name it knows, or even
 ## an empty [String], if it doesn't know any [LokAccessStrategy]s.
-static func get_default_strategy_name(wanted_name: String) -> String:
+static func _get_default_strategy_name(wanted_name: String) -> String:
 	var result: String = ""
 	
-	var strategies: Array[LokAccessStrategy] = get_strategies()
+	var strategies: Array[LokAccessStrategy] = _get_strategies()
 	
 	for strategy: LokAccessStrategy in strategies:
 		var strategy_name: String = str(strategy)
@@ -362,25 +378,25 @@ static func get_default_strategy_name(wanted_name: String) -> String:
 	
 	return result
 
-## The [method update_available_strategies] method uses the
-## [member strategy_scripts] to update what [LokAccessStrategy] options
+## The [method _update_available_strategies] method uses the
+## [member _strategy_scripts] to update what [LokAccessStrategy] options
 ## should be shown in the [ProjectSettings] as options to choose from.
-func update_available_strategies() -> void:
-	strategy_scripts = load_strategy_scripts()
-	var available_strategies: Array[LokAccessStrategy] = get_strategies()
-	var string_of_available_strategies: String = get_strategies_enum_string()
-	var default_strategy_string: String = get_default_strategy_name("Encrypted")
+func _update_available_strategies() -> void:
+	_strategy_scripts = _load_strategy_scripts()
+	var available_strategies: Array[LokAccessStrategy] = _get_strategies()
+	var string_of_available_strategies: String = _get_strategies_enum_string()
+	var default_strategy_string: String = _get_default_strategy_name("Encrypted")
 	
-	plugin_settings["addons/locker/access_strategy"]["property_info"]["hint_string"] = string_of_available_strategies
-	plugin_settings["addons/locker/access_strategy"]["default_value"] = default_strategy_string
-	plugin_settings["addons/locker/access_strategy"]["current_value"] = default_strategy_string
+	_plugin_settings["addons/locker/access_strategy"]["property_info"]["hint_string"] = string_of_available_strategies
+	_plugin_settings["addons/locker/access_strategy"]["default_value"] = default_strategy_string
+	_plugin_settings["addons/locker/access_strategy"]["current_value"] = default_strategy_string
 
-## The [method string_to_strategy] method takes a [param string] and
+## The [method _string_to_strategy] method takes a [param string] and
 ## returns a [LokAccessStrategy] that corresponds to that [param string]. [br]
 ## If an invalid [param string] is passed, this method returns
 ## [code]null[/code].
-static func string_to_strategy(string: String) -> LokAccessStrategy:
-	var strategies: Array[LokAccessStrategy] = get_strategies()
+static func _string_to_strategy(string: String) -> LokAccessStrategy:
+	var strategies: Array[LokAccessStrategy] = _get_strategies()
 	
 	for strategy: LokAccessStrategy in strategies:
 		if string == str(strategy):
@@ -388,24 +404,24 @@ static func string_to_strategy(string: String) -> LokAccessStrategy:
 	
 	return null
 
-## The [method strategy_to_string] method takes a [param strategy] and
+## The [method _strategy_to_string] method takes a [param strategy] and
 ## returns a [String] that represents that [param strategy] in the
 ## [code]"addons/locker/access_strategy"[/code] setting of the
 ## [ProjectSettings]. [br]
 ## If an invalid [param strategy] is passed, this method returns
 ## an empty [String].
-static func strategy_to_string(strategy: LokAccessStrategy) -> String:
+static func _strategy_to_string(strategy: LokAccessStrategy) -> String:
 	if strategy == null:
 		return ""
 	
 	return str(strategy)
 
-## The [method save_settings] method takes a [param settings] [Dictionary] and
+## The [method _save_settings] method takes a [param settings] [Dictionary] and
 ## takes the current value of each one of them from the [ProjectSettings],
 ## saving them in a [ConfigFile] in the [constant CONFIG_PATH]. [br]
 ## The [param settings] parameter has to conform to the structure explained in
-## the [member plugin_settings] description.
-func save_settings(settings: Dictionary) -> void:
+## the [member _plugin_settings] description.
+func _save_settings(settings: Dictionary) -> void:
 	if settings.is_empty():
 		return
 	
@@ -424,13 +440,13 @@ func save_settings(settings: Dictionary) -> void:
 	
 	config.save(CONFIG_PATH)
 
-## The [method load_settings] method takes a [param settings] [Dictionary] and
+## The [method _load_settings] method takes a [param settings] [Dictionary] and
 ## loads the settings described by it from the [ConfigFile] in the
 ## [constant CONFIG_PATH].
 ## This method, then, sets the loaded settings in the [ProjectSettings]. [br]
 ## The [param settings] parameter has to conform to the structure explained in
-## the [member plugin_settings] description.
-func load_settings(settings: Dictionary) -> void:
+## the [member _plugin_settings] description.
+func _load_settings(settings: Dictionary) -> void:
 	var config := ConfigFile.new()
 	var err: Error = config.load(CONFIG_PATH)
 	
@@ -452,13 +468,13 @@ func load_settings(settings: Dictionary) -> void:
 		
 		ProjectSettings.set_setting(setting_path, new_value)
 
-## The [method get_changed_settings] method takes a [param settings]
+## The [method _get_changed_settings] method takes a [param settings]
 ## [Dictionary] and looks for settings that had their values changed. [br]
 ## When found, their values are updated and they are returned.
 ## The [param settings] parameter as well as the returned [Dictionary]
-## conform to the structure explained in the [member plugin_settings]
+## conform to the structure explained in the [member _plugin_settings]
 ## description.
-func get_changed_settings(settings: Dictionary) -> Dictionary:
+func _get_changed_settings(settings: Dictionary) -> Dictionary:
 	var settings_changed: Dictionary = {}
 	
 	for setting_path: String in settings.keys():
@@ -475,11 +491,11 @@ func get_changed_settings(settings: Dictionary) -> Dictionary:
 	
 	return settings_changed
 
-## The [method add_settings] method takes a [param settings]
+## The [method _add_settings] method takes a [param settings]
 ## [Dictionary] and saves each of its settings in the [ProjectSettings]. [br]
 ## The [param settings] parameter must conform to the structure explained
-## in the [member plugin_settings] description.
-func add_settings(settings: Dictionary) -> void:
+## in the [member _plugin_settings] description.
+func _add_settings(settings: Dictionary) -> void:
 	for setting_path: String in settings.keys():
 		var setting: Dictionary = settings[setting_path]
 		
@@ -488,18 +504,18 @@ func add_settings(settings: Dictionary) -> void:
 		ProjectSettings.set_as_basic(setting_path, setting["is_basic"])
 		ProjectSettings.add_property_info(setting["property_info"])
 
-## The [method remove_settings] method takes a [param settings]
+## The [method _remove_settings] method takes a [param settings]
 ## [Dictionary] and removes each of its settings from the [ProjectSettings].
 ## [br]
 ## The [param settings] parameter must conform to the structure explained
-## in the [member plugin_settings] description.
-func remove_settings(settings: Dictionary) -> void:
+## in the [member _plugin_settings] description.
+func _remove_settings(settings: Dictionary) -> void:
 	for setting_path: String in settings.keys():
 		var setting: Dictionary = settings[setting_path]
 		
 		ProjectSettings.set_setting(setting_path, null)
 
-## The [method start_plugin] method registers the singleton needed by the
+## The [method _start_plugin] method registers the singleton needed by the
 ## [LockerPlugin] as an autoload, so it isn't needed to do that manually. [br]
 ## This method also updates and registers the settings of this plugin in the
 ## [ProjectSettings], making sure to load any settings used before deactivating
@@ -509,49 +525,33 @@ func remove_settings(settings: Dictionary) -> void:
 ## registered in the [ProjectSettings] so that they can be easily selected. [br]
 ## Finally, this method makes sure that whenever a setting from this Plugin
 ## is altered, it is saved in the [ConfigFile] in the [constant CONFIG_PATH].
-func start_plugin() -> void:
-	update_available_strategies()
+func _start_plugin() -> void:
+	_update_available_strategies()
 	add_autoload_singleton(AUTOLOAD_NAME, AUTOLOAD_PATH)
-	add_settings(plugin_settings)
-	load_settings(plugin_settings)
+	_add_settings(_plugin_settings)
+	_load_settings(_plugin_settings)
 	
 	LokUtil.check_and_connect_signal(
 		ProjectSettings, &"settings_changed", _on_project_settings_changed
 	)
 
-## The [method finish_plugin] method unregisters the singleton needed by the
+## The [method _finish_plugin] method unregisters the singleton needed by the
 ## [LockerPlugin] from the autoloads, so it doesn't stay there without the
 ## Plugin being active. [br]
 ## This method also unregisters the settings of this plugin from the
 ## [ProjectSettings].
-func finish_plugin() -> void:
+func _finish_plugin() -> void:
 	remove_autoload_singleton(AUTOLOAD_NAME)
-	remove_settings(plugin_settings)
+	_remove_settings(_plugin_settings)
 	
 	LokUtil.check_and_disconnect_signal(
 		ProjectSettings, &"settings_changed", _on_project_settings_changed
 	)
 
-# Registers plugin's autoload and settings.
-func _enter_tree() -> void:
-	start_plugin()
-
-# Unregisters plugin's autoload and settings.
-func _exit_tree() -> void:
-	finish_plugin()
-
-# Registers plugin's autoload and settings.
-func _enable_plugin() -> void:
-	start_plugin()
-
-# Unregisters plugin's autoload and settings.
-func _disable_plugin() -> void:
-	finish_plugin()
-
 # Updates config.cfg file to store changed settings
 func _on_project_settings_changed() -> void:
-	var changed_settings: Dictionary = get_changed_settings(plugin_settings)
+	var changed_settings: Dictionary = _get_changed_settings(_plugin_settings)
 	
-	save_settings(changed_settings)
+	_save_settings(changed_settings)
 
 #endregion
