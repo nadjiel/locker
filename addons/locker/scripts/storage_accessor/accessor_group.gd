@@ -15,6 +15,8 @@
 class_name LokAccessorGroup
 extends Node
 
+#region Signals
+
 ## The [signal group_saving_started] signal is emitted when a group of save
 ## operations was started by this [LokAccessorGroup].
 signal group_saving_started()
@@ -39,6 +41,10 @@ signal group_loading_finished()
 ## operations was finished by this [LokAccessorGroup].
 signal group_removing_finished()
 
+#endregion
+
+#region Properties
+
 ## The [member current_version] property is used as the version with which
 ## data is saved when using this [LokAccessorGroup]. [br]
 ## By default, it is set to an empty [String], which is converted to the
@@ -53,6 +59,10 @@ signal group_removing_finished()
 	set = set_accessors,
 	get = get_accessors
 
+#endregion
+
+#region Setters & Getters
+
 func set_current_version(new_version: String) -> void:
 	current_version = new_version
 
@@ -64,6 +74,10 @@ func set_accessors(new_accessors: Array[LokStorageAccessor]) -> void:
 
 func get_accessors() -> Array[LokStorageAccessor]:
 	return accessors
+
+#endregion
+
+#region Methods
 
 ## The [method add_accessor] method is responsible for adding a new
 ## [LokStorageAccessor] to the [member accessors] list, so that
@@ -146,3 +160,5 @@ func remove_accessor_group() -> void:
 		await accessor.remove_data("")
 	
 	group_removing_finished.emit()
+
+#endregion

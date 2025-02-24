@@ -2,7 +2,7 @@
 class_name SimpleTopdownPlayerAccessorV1
 extends LokStorageAccessorVersion
 
-func retrieve_data(deps: Dictionary) -> Dictionary:
+func _retrieve_data(deps: Dictionary) -> Dictionary:
 	var player: Sprite2D = deps.get(&"player")
 	
 	if player == null:
@@ -13,7 +13,7 @@ func retrieve_data(deps: Dictionary) -> Dictionary:
 		"color": var_to_str(player.modulate)
 	}
 
-func consume_data(res: Dictionary, deps: Dictionary) -> void:
+func _consume_data(res: Dictionary, deps: Dictionary) -> void:
 	var player: Sprite2D = deps.get(&"player")
 	
 	if player == null:

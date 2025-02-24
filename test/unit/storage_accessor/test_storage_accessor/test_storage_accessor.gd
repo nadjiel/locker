@@ -15,7 +15,7 @@ func before_all() -> void:
 
 func before_each() -> void:
 	accessor = add_child_autofree(StorageAccessor.new())
-	accessor.storage_manager = add_child_autofree(DoubledStorageManager.new())
+	accessor._storage_manager = add_child_autofree(DoubledStorageManager.new())
 
 func after_all() -> void:
 	queue_free()
@@ -28,7 +28,7 @@ func test_storage_manager_starts_as_the_autoload() -> void:
 	)
 	
 	assert_eq(
-		new_accessor.storage_manager,
+		new_accessor._storage_manager,
 		LokGlobalStorageManager,
 		"Value didn't match expected"
 	)
@@ -112,7 +112,7 @@ func test_version_number_updates_version() -> void:
 	
 	accessor.version_number = "2.0.0"
 	
-	assert_eq(accessor.version, version, "Version didn't match expected")
+	assert_eq(accessor._version, version, "Version didn't match expected")
 
 func test_version_number_converts_to_latest() -> void:
 	var version := LokStorageAccessorVersion.create("2.0.0")
@@ -128,7 +128,7 @@ func test_versions_updates_version() -> void:
 	
 	accessor.versions = [ version ]
 	
-	assert_eq(accessor.version, version, "Version didn't match expected")
+	assert_eq(accessor._version, version, "Version didn't match expected")
 
 #endregion
 
@@ -141,7 +141,7 @@ func test_get_dependencies_parses_node_paths() -> void:
 	accessor.dependency_paths[&"dep"] = dep_path
 	
 	var expected: Dictionary = { &"dep": dep }
-	var deps: Dictionary = accessor.get_dependencies()
+	var deps: Dictionary = accessor._get_dependencies()
 	
 	assert_eq(deps, expected, "Dependencies weren't parsed")
 
@@ -150,10 +150,10 @@ func test_find_version_returns_right_version() -> void:
 	
 	accessor.versions.append(version)
 	
-	assert_eq(accessor.find_version("2.0.0"), version, "Version not found")
+	assert_eq(accessor._find_version("2.0.0"), version, "Version not found")
 
 func test_find_version_returns_null() -> void:
-	assert_eq(accessor.find_version("2.0.0"), null, "Version found")
+	assert_eq(accessor._find_version("2.0.0"), null, "Version found")
 
 func test_find_latest_version_returns_right_version() -> void:
 	var version1 := LokStorageAccessorVersion.create("1.0.0")
@@ -161,10 +161,10 @@ func test_find_latest_version_returns_right_version() -> void:
 	
 	accessor.versions = [ version1, version2 ]
 	
-	assert_eq(accessor.find_latest_version(), version2, "Version not found")
+	assert_eq(accessor._find_latest_version(), version2, "Version not found")
 
 func test_find_latest_version_returns_null() -> void:
-	assert_eq(accessor.find_latest_version(), null, "Version found")
+	assert_eq(accessor._find_latest_version(), null, "Version found")
 
 func test_select_version_returns_true() -> void:
 	var version := LokStorageAccessorVersion.create("1.0.0")
@@ -186,7 +186,7 @@ func test_save_data_defaults_file_to_class_property() -> void:
 	accessor.save_data()
 	
 	assert_called(
-		accessor.storage_manager, "save_data",
+		accessor._storage_manager, "save_data",
 		[ "accessor_file", "", [ accessor ], false ]
 	)
 
@@ -196,12 +196,12 @@ func test_save_data_prioritizes_passed_file() -> void:
 	accessor.save_data("accessor_file")
 	
 	assert_called(
-		accessor.storage_manager, "save_data",
+		accessor._storage_manager, "save_data",
 		[ "accessor_file", "", [ accessor ], false ]
 	)
 
 func test_save_data_cancels_without_storage_manager() -> void:
-	accessor.storage_manager = null
+	accessor._storage_manager = null
 	
 	assert_eq(await accessor.save_data(), {}, "Save data didn't cancel")
 
@@ -220,7 +220,7 @@ func test_load_data_defaults_file_to_class_property() -> void:
 	accessor.load_data()
 	
 	assert_called(
-		accessor.storage_manager, "load_data",
+		accessor._storage_manager, "load_data",
 		[ "accessor_file", [ accessor ], [ accessor.partition ], [] ]
 	)
 
@@ -230,12 +230,12 @@ func test_load_data_prioritizes_passed_file() -> void:
 	accessor.load_data("accessor_file")
 	
 	assert_called(
-		accessor.storage_manager, "load_data",
+		accessor._storage_manager, "load_data",
 		[ "accessor_file", [ accessor ], [ accessor.partition ], [] ]
 	)
 
 func test_load_data_cancels_without_storage_manager() -> void:
-	accessor.storage_manager = null
+	accessor._storage_manager = null
 	
 	assert_eq(await accessor.load_data(), {}, "Load data didn't cancel")
 
@@ -254,7 +254,7 @@ func test_remove_data_defaults_file_to_class_property() -> void:
 	accessor.remove_data()
 	
 	assert_called(
-		accessor.storage_manager, "remove_data",
+		accessor._storage_manager, "remove_data",
 		[ "accessor_file", [ accessor ], [ accessor.partition ], [] ]
 	)
 
@@ -264,12 +264,12 @@ func test_remove_data_prioritizes_passed_file() -> void:
 	accessor.remove_data("accessor_file")
 	
 	assert_called(
-		accessor.storage_manager, "remove_data",
+		accessor._storage_manager, "remove_data",
 		[ "accessor_file", [ accessor ], [ accessor.partition ], [] ]
 	)
 
 func test_remove_data_cancels_without_storage_manager() -> void:
-	accessor.storage_manager = null
+	accessor._storage_manager = null
 	
 	assert_eq(await accessor.remove_data(), {}, "Remove data didn't cancel")
 
@@ -298,7 +298,7 @@ func test_retrieve_data_consults_version() -> void:
 	
 	var expected: Dictionary = { "success": true }
 	
-	stub(version.retrieve_data).to_return(expected)
+	stub(version._retrieve_data).to_return(expected)
 	
 	accessor.versions = [ version ]
 	
@@ -312,7 +312,7 @@ func test_retrieve_data_passes_dependencies_to_version() -> void:
 	
 	var expected: Dictionary = { "success": true }
 	
-	stub(version.retrieve_data).to_return(expected).when_passed({ &"dep": dep })
+	stub(version._retrieve_data).to_return(expected).when_passed({ &"dep": dep })
 	
 	accessor.versions = [ version ]
 	accessor.dependency_paths = { &"dep": dep_path }
@@ -331,7 +331,7 @@ func test_consume_data_cancels_if_inactive() -> void:
 	
 	accessor.consume_data({})
 	
-	assert_not_called(version, "consume_data")
+	assert_not_called(version, "_consume_data")
 
 func test_consume_data_consults_version() -> void:
 	var version: LokStorageAccessorVersion = DoubledStorageAccessorVersion.new()
@@ -340,7 +340,7 @@ func test_consume_data_consults_version() -> void:
 	
 	accessor.consume_data({})
 	
-	assert_called(version, "consume_data")
+	assert_called(version, "_consume_data")
 
 func test_consume_data_passes_args_to_version() -> void:
 	var version: LokStorageAccessorVersion = DoubledStorageAccessorVersion.new()
@@ -356,6 +356,6 @@ func test_consume_data_passes_args_to_version() -> void:
 	
 	accessor.consume_data(data)
 	
-	assert_called(version, "consume_data", [ data, deps ])
+	assert_called(version, "_consume_data", [ data, deps ])
 
 #endregion

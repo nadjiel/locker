@@ -2,7 +2,7 @@
 class_name DynamicPlayerAccessorV1
 extends LokStorageAccessorVersion
 
-func retrieve_data(deps: Dictionary) -> Dictionary:
+func _retrieve_data(deps: Dictionary) -> Dictionary:
 	var player: Node2D = deps.get(&"player")
 	
 	var data: Dictionary = {}
@@ -12,7 +12,7 @@ func retrieve_data(deps: Dictionary) -> Dictionary:
 	
 	return data
 
-func consume_data(res: Dictionary, deps: Dictionary) -> void:
+func _consume_data(res: Dictionary, deps: Dictionary) -> void:
 	var player: Node2D = deps.get(&"player")
 	
 	var data: Dictionary = res.get("data", {})

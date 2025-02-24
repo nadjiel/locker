@@ -55,16 +55,6 @@ signal loading_finished(result: Dictionary)
 ## that wasn't removed.
 signal removing_finished(result: Dictionary)
 
-## The [member storage_manager] property is just a reference to the
-## [LokGlobalStorageManager] autoload. [br]
-## Its reference is stored in this property so it can be more easily
-## mocked in unit tests. [br]
-## The value of this property shouldn't be altered. Doing so may
-## cause the saving and loading system to not work properly.
-var storage_manager: LokStorageManager = LokGlobalStorageManager:
-	set = set_storage_manager,
-	get = get_storage_manager
-
 ## The [member id] property specifies what is the unique id of this
 ## [LokStorageAccessor]. [br]
 ## You should always plan your save system to make sure your
@@ -123,7 +113,7 @@ var storage_manager: LokStorageManager = LokGlobalStorageManager:
 ## they should be added to this [Array] through a new [Array], so that
 ## this property's setter gets triggered. Alternatively, you can use
 ## a method like [method Array.append], but make sure to call the
-## [method update_version] method next.
+## [method _update_version] method next.
 @export var versions: Array[LokStorageAccessorVersion] = []:
 	set = set_versions,
 	get = get_versions
@@ -152,21 +142,25 @@ var storage_manager: LokStorageManager = LokGlobalStorageManager:
 	set = set_active,
 	get = is_active
 
-## The [member version] property stores the current [LokStorageAccessorVersion]
+## The [member _storage_manager] property is just a reference to the
+## [LokGlobalStorageManager] autoload. [br]
+## Its reference is stored in this property so it can be more easily
+## mocked in unit tests. [br]
+## The value of this property shouldn't be altered. Doing so may
+## cause the saving and loading system to not work properly.
+var _storage_manager: LokStorageManager = LokGlobalStorageManager:
+	set = set_storage_manager,
+	get = get_storage_manager
+
+## The [member _version] property stores the current [LokStorageAccessorVersion]
 ## selected by the [member version_number]. [br]
 ## This is the [LokStorageAccessorVersion] that's used when saving and loading
 ## data through this [LokStorageAccessor].
-var version: LokStorageAccessorVersion:
+var _version: LokStorageAccessorVersion:
 	set = set_version,
 	get = get_version
 
 #region Setters & Getters
-
-func set_storage_manager(new_manager: LokStorageManager) -> void:
-	storage_manager = new_manager
-
-func get_storage_manager() -> LokStorageManager:
-	return storage_manager
 
 func set_id(new_id: String) -> void:
 	var old_id: String = id
@@ -194,7 +188,7 @@ func get_partition() -> String:
 func set_versions(new_versions: Array[LokStorageAccessorVersion]) -> void:
 	versions = new_versions
 	
-	update_version()
+	_update_version()
 
 func get_versions() -> Array[LokStorageAccessorVersion]:
 	return versions
@@ -204,7 +198,7 @@ func set_version_number(new_number: String) -> void:
 	
 	version_number = new_number
 	
-	update_version()
+	_update_version()
 
 func get_version_number() -> String:
 	return version_number
@@ -221,49 +215,57 @@ func set_active(new_state: bool) -> void:
 func is_active() -> bool:
 	return active
 
+func set_storage_manager(new_manager: LokStorageManager) -> void:
+	_storage_manager = new_manager
+
+func get_storage_manager() -> LokStorageManager:
+	return _storage_manager
+
 func set_version(new_version: LokStorageAccessorVersion) -> void:
-	var old_version: LokStorageAccessorVersion = version
+	var old_version: LokStorageAccessorVersion = _version
 	
-	version = new_version
+	_version = new_version
 	
 	if old_version != new_version:
 		update_configuration_warnings()
 
 func get_version() -> LokStorageAccessorVersion:
-	return version
-
-#endregion
-
-#region Debug Methods
-
-## The [method get_readable_name] method is a way of getting a more
-## user friendly name for this [LokStorageAccessor], for use in debugging.
-func get_readable_name() -> String:
-	if is_inside_tree():
-		return str(get_path())
-	if not name == "":
-		return name
-	
-	return str(self)
-
-## The [method push_error_no_manager] method pushes an error
-## warning that there's no [member storage_manager] set in this
-## [LokStorageAccessor].
-func push_error_no_manager() -> void:
-	push_error(
-		"No StorageManager found in Accessor '%s'" % get_readable_name()
-	)
-
-## The [method push_error_unactive_accessor] method pushes an error
-## warning that an operation was tried in an unactive [LokStorageAccessor].
-func push_error_unactive_accessor() -> void:
-	push_error(
-		"Tried saving or loading unactive Accessor '%s'" % get_readable_name()
-	)
+	return _version
 
 #endregion
 
 #region Methods
+
+# Adds this StorageAccessor to the GlobalStorageManager
+func _enter_tree() -> void:
+	if Engine.is_editor_hint():
+		return
+	if _storage_manager == null:
+		_push_error_no_manager()
+		return
+	
+	_storage_manager.add_accessor(self)
+
+# Removes this StorageAccessor from the GlobalStorageManager
+func _exit_tree() -> void:
+	if Engine.is_editor_hint():
+		return
+	if _storage_manager == null:
+		_push_error_no_manager()
+		return
+	
+	_storage_manager.remove_accessor(self)
+
+# Returns warnings of the configuration of this StorageAccessor
+func _get_configuration_warnings() -> PackedStringArray:
+	var warnings: PackedStringArray = []
+	
+	if _version == null:
+		warnings.append("Set a valid version for this Accessor to use.")
+	if get_id() == "":
+		warnings.append("Set a unique id to this Storage Accessor.")
+	
+	return warnings
 
 ## The [method create] method is a utility to create a new
 ## [LokStorageAccessor] with its properties already
@@ -278,78 +280,16 @@ static func create(
 	
 	return result
 
-## The [method get_dependencies] method returns a copy of the
-## [member dependency_paths] [Dictionary], but with
-## [Node]s as values, instead of the original [NodePath]s. [br]
-## This is useful when passing their reference to the
-## [method LokStorageAccessorVersion.retrieve_data] and
-## [method LokStorageAccessorVersion.consume_data] methods.
-func get_dependencies() -> Dictionary:
-	var result: Dictionary = {}
-	
-	for dependency_name: Variant in dependency_paths:
-		var dependency_path: Variant = dependency_paths[dependency_name]
-		
-		if dependency_path is NodePath:
-			result[dependency_name] = get_node(dependency_path)
-		else:
-			result[dependency_name] = dependency_path
-	
-	return result
-
-## The [method find_version] method looks through all the
-## [member versions] and returns the one that has same
-## [member LokStorageAccessorVersion.number] as the passed in
-## the [param number] parameter. [br]
-## If no such version is found, [code]null[/code] is returned.
-func find_version(number: String) -> LokStorageAccessorVersion:
-	for version_i: LokStorageAccessorVersion in versions:
-		if version_i.number == number:
-			return version_i
-	
-	return null
-
-## The [method find_latest_version] method looks through all the
-## [member versions] and returns the one that has the latest
-## [member LokStorageAccessorVersion.number]. [br]
-## If no such version is found, [code]null[/code] is returned.
-func find_latest_version() -> LokStorageAccessorVersion:
-	var reducer: Callable = func(
-		prev: LokStorageAccessorVersion,
-		next: LokStorageAccessorVersion
-	) -> LokStorageAccessorVersion:
-		if LokStorageAccessorVersion.compare_versions(prev, next) == 1:
-			return prev
-		else:
-			return next
-	
-	return versions.reduce(reducer)
-
-## The [method update_version] method serves to make the [member version]
-## property properly store the current version that the [member version_number]
-## points to.
-func update_version() -> void:
-	# Uses latest version for empty version_numbers
-	if version_number == "":
-		version = find_latest_version()
-		
-		# Conforms version_number to latest version
-		if version != null:
-			version_number = version.number
-	# Searches corresponding version for other version_numbers
-	else:
-		version = find_version(version_number)
-
 ## The [method select_version] method looks through all the
-## [member versions] and sets the current [member version] to be
+## [member versions] and sets the current [member _version] to be
 ## the one with number matching the [param number] parameter. [br]
 ## If no such version is found, [code]false[/code] is returned
-## and the [member version] is set to [code]null[/code], else
+## and the [member _version] is set to [code]null[/code], else
 ## [code]true[/code] is returned.
 func select_version(number: String) -> bool:
 	set_version_number(number)
 	
-	var found_version: bool = version != null
+	var found_version: bool = _version != null
 	
 	return found_version
 
@@ -367,15 +307,15 @@ func save_data(
 		file_id = file
 	
 	if not is_active():
-		push_error_unactive_accessor()
+		_push_error_unactive_accessor()
 		return {}
-	if storage_manager == null:
-		push_error_no_manager()
+	if _storage_manager == null:
+		_push_error_no_manager()
 		return {}
 	
 	saving_started.emit()
 	
-	var result: Dictionary = await storage_manager.save_data(
+	var result: Dictionary = await _storage_manager.save_data(
 		file_id, version_number, [ self ], false
 	)
 	
@@ -391,15 +331,15 @@ func load_data(file_id: String = file) -> Dictionary:
 		file_id = file
 	
 	if not is_active():
-		push_error_unactive_accessor()
+		_push_error_unactive_accessor()
 		return {}
-	if storage_manager == null:
-		push_error_no_manager()
+	if _storage_manager == null:
+		_push_error_no_manager()
 		return {}
 	
 	loading_started.emit()
 	
-	var result: Dictionary = await storage_manager.load_data(
+	var result: Dictionary = await _storage_manager.load_data(
 		file_id, [ self ], [ partition ], []
 	)
 	
@@ -415,15 +355,15 @@ func remove_data(file_id: String = file) -> Dictionary:
 		file_id = file
 	
 	if not is_active():
-		push_error_unactive_accessor()
+		_push_error_unactive_accessor()
 		return {}
-	if storage_manager == null:
-		push_error_no_manager()
+	if _storage_manager == null:
+		_push_error_no_manager()
 		return {}
 	
 	removing_started.emit()
 	
-	var result: Dictionary = await storage_manager.remove_data(
+	var result: Dictionary = await _storage_manager.remove_data(
 		file_id, [ self ], [ partition ], []
 	)
 	
@@ -432,58 +372,118 @@ func remove_data(file_id: String = file) -> Dictionary:
 	return result
 
 ## The [method retrieve_data] method uses the
-## [method LokStorageAccessorVersion.retrieve_data]
+## [method LokStorageAccessorVersion._retrieve_data]
 ## to collect the data that should be saved
 ## by the [method LokStorageAccessor.save_data] method.
 func retrieve_data() -> Dictionary:
-	if version == null:
+	if _version == null:
 		return {}
 	if not is_active():
 		return {}
 	
-	return version.retrieve_data(get_dependencies())
+	return _version._retrieve_data(_get_dependencies())
 
 ## The [method consume_data] method uses the
-## [method LokStorageAccessorVersion.consume_data]
+## [method LokStorageAccessorVersion._consume_data]
 ## to use the data that was loaded
 ## by the [method LokStorageAccessor.load_data] method.
 func consume_data(data: Dictionary) -> void:
-	if version == null:
+	if _version == null:
 		return
 	if not is_active():
 		return
 	
-	version.consume_data(data, get_dependencies())
+	_version._consume_data(data, _get_dependencies())
 
-# Adds this StorageAccessor to the GlobalStorageManager
-func _enter_tree() -> void:
-	if Engine.is_editor_hint():
-		return
-	if storage_manager == null:
-		push_error_no_manager()
-		return
+## The [method _find_version] method looks through all the
+## [member versions] and returns the one that has same
+## [member LokStorageAccessorVersion.number] as the passed in
+## the [param number] parameter. [br]
+## If no such version is found, [code]null[/code] is returned.
+func _find_version(number: String) -> LokStorageAccessorVersion:
+	for version_i: LokStorageAccessorVersion in versions:
+		if version_i.number == number:
+			return version_i
 	
-	storage_manager.add_accessor(self)
+	return null
 
-# Removes this StorageAccessor from the GlobalStorageManager
-func _exit_tree() -> void:
-	if Engine.is_editor_hint():
-		return
-	if storage_manager == null:
-		push_error_no_manager()
-		return
+## The [method _find_latest_version] method looks through all the
+## [member versions] and returns the one that has the latest
+## [member LokStorageAccessorVersion.number]. [br]
+## If no such version is found, [code]null[/code] is returned.
+func _find_latest_version() -> LokStorageAccessorVersion:
+	var reducer: Callable = func(
+		prev: LokStorageAccessorVersion,
+		next: LokStorageAccessorVersion
+	) -> LokStorageAccessorVersion:
+		if LokStorageAccessorVersion.compare_versions(prev, next) == 1:
+			return prev
+		else:
+			return next
 	
-	storage_manager.remove_accessor(self)
+	return versions.reduce(reducer)
 
-# Returns warnings of the configuration of this StorageAccessor
-func _get_configuration_warnings() -> PackedStringArray:
-	var warnings: PackedStringArray = []
+## The [method _update_version] method serves to make the [member _version]
+## property properly store the current version that the [member version_number]
+## points to.
+func _update_version() -> void:
+	# Uses latest version for empty version_numbers
+	if version_number == "":
+		_version = _find_latest_version()
+		
+		# Conforms version_number to latest version
+		if _version != null:
+			version_number = _version.number
+	# Searches corresponding version for other version_numbers
+	else:
+		_version = _find_version(version_number)
+
+## The [method _get_dependencies] method returns a copy of the
+## [member dependency_paths] [Dictionary], but with
+## [Node]s as values, instead of the original [NodePath]s. [br]
+## This is useful when passing their reference to the
+## [method LokStorageAccessorVersion._retrieve_data] and
+## [method LokStorageAccessorVersion._consume_data] methods.
+func _get_dependencies() -> Dictionary:
+	var result: Dictionary = {}
 	
-	if version == null:
-		warnings.append("Set a valid version for this Accessor to use.")
-	if get_id() == "":
-		warnings.append("Set a unique id to this Storage Accessor.")
+	for dependency_name: Variant in dependency_paths:
+		var dependency_path: Variant = dependency_paths[dependency_name]
+		
+		if dependency_path is NodePath:
+			result[dependency_name] = get_node(dependency_path)
+		else:
+			result[dependency_name] = dependency_path
 	
-	return warnings
+	return result
+
+#endregion
+
+#region Debug Methods
+
+## The [method _get_readable_name] method is a way of getting a more
+## user friendly name for this [LokStorageAccessor], for use in debugging.
+func _get_readable_name() -> String:
+	if is_inside_tree():
+		return str(get_path())
+	if not name == "":
+		return name
+	
+	return str(self)
+
+## The [method _push_error_no_manager] method pushes an error
+## warning that there's no [member _storage_manager] set in this
+## [LokStorageAccessor].
+func _push_error_no_manager() -> void:
+	push_error(
+		"No StorageManager found in Accessor '%s'" % _get_readable_name()
+	)
+
+## The [method _push_error_unactive_accessor] method pushes an error
+## warning that an operation was tried in an unactive [LokStorageAccessor].
+func _push_error_unactive_accessor() -> void:
+	push_error(
+		"Tried saving or loading unactive Accessor '%s'" % _get_readable_name()
+	)
 
 #endregion

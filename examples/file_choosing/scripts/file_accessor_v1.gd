@@ -2,13 +2,13 @@
 class_name FileChoosingFileAccessorV1
 extends LokStorageAccessorVersion
 
-func retrieve_data(_deps: Dictionary) -> Dictionary:
+func _retrieve_data(_deps: Dictionary) -> Dictionary:
 	return {
 		"lives": randi_range(0, 10),
 		"progress": randf()
 	}
 
-func consume_data(res: Dictionary, deps: Dictionary) -> void:
+func _consume_data(res: Dictionary, deps: Dictionary) -> void:
 	var file: FileCard = deps.get(&"file_card")
 	
 	if file == null:

@@ -7,13 +7,15 @@
 ## changes in the save files organization. [br]
 ## In order to achieve that, this class should be extended
 ## so that different implementations of the
-## [method retrieve_data] and [method consume_data] methods can be
+## [method _retrieve_data] and [method _consume_data] methods can be
 ## created for different versions of a [LokStorageAccessor]. [br]
 ## [br]
 ## [b]Version[/b]: 1.0.0[br]
 ## [b]Author[/b]: [url]github.com/nadjiel[/url]
 class_name LokStorageAccessorVersion
 extends Resource
+
+#region Properties
 
 ## The [member number] property specifies what version of
 ## [LokStorageAccessor] this [LokStorageAccessorVersion]
@@ -26,11 +28,19 @@ extends Resource
 	set = set_number,
 	get = get_number
 
+#endregion
+
+#region Setters & Getters
+
 func set_number(new_number: String) -> void:
 	number = new_number
 
 func get_number() -> String:
 	return number
+
+#endregion
+
+#region Methods
 
 ## The [method create] method is a utility to create a new
 ## [LokStorageAccessorVersion] with its properties already
@@ -113,7 +123,7 @@ static func compare_major_versions(
 	
 	return major_version1.naturalnocasecmp_to(major_version2)
 
-## The [method retrieve_data] method should be overriden by concrete
+## The [method _retrieve_data] method should be overriden by concrete
 ## implementations of [LokStorageAccessorVersion]s in order
 ## to define what data this [LokStorageAccessor] should store. [br]
 ## This method receives a [param dependencies] [Dictionary] that brings
@@ -131,11 +141,11 @@ static func compare_major_versions(
 ## so you need to make sure to transform your data accordingly. [br]
 ## For parsing from complex data types like [Vector2]s to [String]s, I recommend
 ## using the [method @GlobalScope.var_to_str] method.
-func retrieve_data(
+func _retrieve_data(
 	_dependencies: Dictionary
 ) -> Dictionary: return {}
 
-## The [method consume_data] method should be overriden by concrete
+## The [method _consume_data] method should be overriden by concrete
 ## implementations of [LokStorageAccessorVersion]s in order
 ## to define what happens to the [param data] it receives when the game is
 ## loaded. [br]
@@ -152,7 +162,9 @@ func retrieve_data(
 ## so you need to make sure to transform your data accordingly. [br]
 ## For parsing from [String] to complex data types like [Vector2]s, I recommend
 ## using the [method @GlobalScope.str_to_var] method.
-func consume_data(
+func _consume_data(
 	_data: Dictionary,
 	_dependencies: Dictionary
 ) -> void: pass
+
+#endregion
