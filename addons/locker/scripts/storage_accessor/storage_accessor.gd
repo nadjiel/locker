@@ -149,16 +149,16 @@ signal removing_finished(result: Dictionary)
 ## The value of this property shouldn't be altered. Doing so may
 ## cause the saving and loading system to not work properly.
 var _storage_manager: LokStorageManager = LokGlobalStorageManager:
-	set = set_storage_manager,
-	get = get_storage_manager
+	set = _set_storage_manager,
+	get = _get_storage_manager
 
 ## The [member _version] property stores the current [LokStorageAccessorVersion]
 ## selected by the [member version_number]. [br]
 ## This is the [LokStorageAccessorVersion] that's used when saving and loading
 ## data through this [LokStorageAccessor].
 var _version: LokStorageAccessorVersion:
-	set = set_version,
-	get = get_version
+	set = _set_version,
+	get = _get_version
 
 #region Setters & Getters
 
@@ -215,13 +215,13 @@ func set_active(new_state: bool) -> void:
 func is_active() -> bool:
 	return active
 
-func set_storage_manager(new_manager: LokStorageManager) -> void:
+func _set_storage_manager(new_manager: LokStorageManager) -> void:
 	_storage_manager = new_manager
 
-func get_storage_manager() -> LokStorageManager:
+func _get_storage_manager() -> LokStorageManager:
 	return _storage_manager
 
-func set_version(new_version: LokStorageAccessorVersion) -> void:
+func _set_version(new_version: LokStorageAccessorVersion) -> void:
 	var old_version: LokStorageAccessorVersion = _version
 	
 	_version = new_version
@@ -229,7 +229,7 @@ func set_version(new_version: LokStorageAccessorVersion) -> void:
 	if old_version != new_version:
 		update_configuration_warnings()
 
-func get_version() -> LokStorageAccessorVersion:
+func _get_version() -> LokStorageAccessorVersion:
 	return _version
 
 #endregion
