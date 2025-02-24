@@ -57,7 +57,7 @@ func before_all() -> void:
 	DoubledAccessStrategy = double(AccessStrategy)
 
 func before_each() -> void:
-	stub(DoubledAccessStrategy, "get_file_ids").to_call(slow_file_ids_getter)
+	stub(DoubledAccessStrategy, "get_saved_files_ids").to_call(slow_file_ids_getter)
 	stub(DoubledAccessStrategy, "save_data").to_call(slow_saver)
 	stub(DoubledAccessStrategy, "load_data").to_call(slow_loader)
 	stub(DoubledAccessStrategy, "remove_data").to_call(slow_remover)
@@ -173,7 +173,7 @@ func test_request_get_files_id_passes_arguments_to_access_strategy() -> void:
 	
 	assert_called(
 		executor.access_strategy,
-		"get_file_ids",
+		"get_saved_files_ids",
 		[ "res://test/saves" ]
 	)
 

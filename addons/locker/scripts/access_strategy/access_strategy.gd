@@ -2,8 +2,8 @@
 ## The [LokAccessStrategy] super class is responsible for
 ## defining how the writing and reading from files should be performed.
 ## 
-## This class should have its [method save_partition] and
-## [method load_partition] methods overriden in order to
+## This class should have its [method _save_partition] and
+## [method _load_partition] methods overriden in order to
 ## provide concrete implementations for the saving and loading
 ## functionalities. [br]
 ## The [LokJSONAccessStrategy] and [LokEncryptedAccessStrategy] classes
@@ -35,115 +35,11 @@ static func create_result(
 	
 	return result
 
-## The [method get_partition_name] method receives a [param file_path],
-## a [param partition_id] and a [param file_format], all of which are
-## [String]s, and returns another [String] representing the name of the
-## partition represented by those data. [br]
-## The partition name here refers to the file name of the partition with
-## the format suffix. [br]
-## [b]Example:[/b]
-## [codeblock]
-## var partition_name: String = get_partition_name(
-##   "res://saves/file_1", "partition_1", "sav"
-## )
-## # This would return "partition_1.sav"
-## [/codeblock]
-## In the case the [param partition_id] is an empty [String], this method
-## considers it as being a partition with the same name as its file, so
-## in the previous example, if the [param partition_id] was [code]""[/code],
-## the result would be [code]"file_1.sav"[/code].
-func get_partition_name(
-	file_path: String,
-	partition_id: String,
-	file_format: String
-) -> String:
-	var file_name: String = LokFileSystemUtil.get_directory_name(file_path)
-	var partition_name: String = partition_id
-	
-	if partition_name == "":
-		partition_name = file_name
-	
-	partition_name = LokFileSystemUtil.join_file_name(
-		partition_name, file_format
-	)
-	
-	return partition_name
-
-## The [method filter_data] method receives a [param data]
-## [Dictionary] other parameters that serve as filters
-## for which entries of that [Dictionary] should be kept. [br]
-## The filter parameters are the [param accessor_ids], [param partition_ids] and
-## the [param version_numbers]. All of these are [Array] of [String]s that
-## identify the entries of the [param data] that should be kept in the
-## [Dictionary] returned by this method. [br]
-## To work properly, this method expects that the [param data] parameter
-## follows the structure:
-## [codeblock]
-## {
-##   "accessor_id_1": {
-##     ...
-##     "partition": <String>,
-##     "version": <String> (optional)
-##   },
-##   "accessor_id_n": { ... }
-## }
-## [/codeblock]
-func filter_data(
-	data: Dictionary,
-	accessor_ids: Array[String] = [],
-	partition_ids: Array[String] = [],
-	version_numbers: Array[String] = []
-) -> Dictionary:
-	var filtered_data: Dictionary = LokUtil.filter_dictionary(
-		data,
-		func(accessor_id: String, accessor_data: Dictionary) -> bool:
-			var accessor_partition: String = accessor_data.get("partition", "")
-			var accessor_version: String = accessor_data.get("version", "")
-			
-			return (
-				LokUtil.filter_value(accessor_ids, accessor_id) and
-				LokUtil.filter_value(partition_ids, accessor_partition) and
-				LokUtil.filter_value(version_numbers, accessor_version)
-			)
-	)
-	
-	return filtered_data
-
-## The [method append_partition_to_data] method receives a [param data]
-## [Dictionary] and a [param partition_id] [String].
-## The [param data] parameter must be a [Dictionary] with other [Dictionary]s
-## as its values, so that this method can set that
-## [param partition_id] as the value of a [code]"partition"[/code] key
-## in each of those sub dictionaries.
-func append_partition_to_data(
-	data: Dictionary,
-	partition_id: String
-) -> Dictionary:
-	return LokUtil.map_dictionary(
-		data,
-		func(accessor_id: String, accessor_data: Dictionary) -> Dictionary:
-			accessor_data["partition"] = partition_id
-			
-			return accessor_data
-	)
-
-## The [method get_file_id] method returns a [String] with the id of
-## a file that has [param file_name] as its name. [br]
-## If the file has no [code]"_"[/code], its entire name is its id, else,
-## its id is considered to be the part after the first [code]"_"[/code].
-func get_file_id(file_name: String) -> String:
-	var file_parts: PackedStringArray = file_name.split("_", false, 1)
-	
-	if file_parts.size() > 1:
-		return file_parts[1]
-	
-	return file_parts[0]
-
-## The [method get_file_ids] method returns a result [Dictionary]
+## The [method get_saved_files_ids] method returns a result [Dictionary]
 ## (with the same structure of the one created by the [method create_result])
 ## whose [code]"data"[/code] field stores an [Array] of [String]s
 ## with the ids of all files saved in the [param files_path].
-func get_file_ids(files_path: String) -> Dictionary:
+func get_saved_files_ids(files_path: String) -> Dictionary:
 	var result: Dictionary = create_result()
 	result["data"] = []
 	
@@ -158,13 +54,13 @@ func get_file_ids(files_path: String) -> Dictionary:
 	var file_ids: Array[String] = []
 	
 	for file_name: String in file_names:
-		file_ids.append(get_file_id(file_name))
+		file_ids.append(_get_file_id(file_name))
 	
 	result["data"] = file_ids
 	
 	return result
 
-## The [method save_data] method uses the [method save_partition] to
+## The [method save_data] method uses the [method _save_partition] to
 ## save the information provided through the [param data] [Dictionary] in
 ## their respective partitions. [br]
 ## The [param file_path] parameter should specify the path to the folder where
@@ -209,13 +105,13 @@ func save_data(
 	
 	# Save each partition
 	for partition_id: String in data:
-		var partition_name: String = get_partition_name(
+		var partition_name: String = _get_partition_name(
 			file_path, partition_id, file_format
 		)
 		var partition_path: String = file_path.path_join(partition_name)
 		var partition_data: Dictionary = data[partition_id]
 		
-		var partition_result: Dictionary = save_partition(
+		var partition_result: Dictionary = _save_partition(
 			partition_path, partition_data, replace
 		)
 		
@@ -225,7 +121,7 @@ func save_data(
 		if result["status"] != Error.OK:
 			return result
 		
-		append_partition_to_data(partition_result["data"], partition_id)
+		_append_partition_to_data(partition_result["data"], partition_id)
 		
 		result["data"].merge(partition_result["data"])
 	
@@ -235,7 +131,7 @@ func save_data(
 	
 	return result
 
-## The [method load_data] method uses the [method load_partition] method to
+## The [method load_data] method uses the [method _load_partition] method to
 ## load the information from the save directory in the [param file_path]. [br]
 ## The [param file_format] parameter specifies from what file format the data
 ## should be read (such format shouldn't include the [code]"."[/code]). [br]
@@ -295,7 +191,7 @@ func load_data(
 		
 		var partition_path: String = file_path.path_join(partition_name)
 		
-		var partition_result: Dictionary = load_partition(
+		var partition_result: Dictionary = _load_partition(
 			partition_path
 		)
 		
@@ -305,7 +201,7 @@ func load_data(
 		if result["status"] != Error.OK:
 			continue
 		
-		append_partition_to_data(
+		_append_partition_to_data(
 			partition_result.get("data", {}),
 			partition_id
 		)
@@ -316,7 +212,7 @@ func load_data(
 	if accessor_ids.is_empty() and version_numbers.is_empty():
 		return result
 	
-	var filtered_data: Dictionary = filter_data(
+	var filtered_data: Dictionary = _filter_data(
 		result["data"], accessor_ids, partition_ids, version_numbers
 	)
 	
@@ -324,7 +220,7 @@ func load_data(
 	
 	return result
 
-## The [method remove_data] method uses the [method remove_partition] method to
+## The [method remove_data] method uses the [method _remove_partition] method to
 ## remove the save directory in the [param file_path], or some of its data. [br]
 ## The [param file_format] parameter specifies from what file format the data
 ## should be removed (such format shouldn't include the [code]"."[/code]). [br]
@@ -389,7 +285,7 @@ func remove_data(
 		
 		var partition_path: String = file_path.path_join(partition_name)
 		
-		var partition_result: Dictionary = remove_partition(
+		var partition_result: Dictionary = _remove_partition(
 			partition_path, accessor_ids, version_numbers
 		)
 		
@@ -408,19 +304,123 @@ func remove_data(
 	
 	return result
 
-## The [method remove_partition] method removes data from the partition
+## The [method _get_partition_name] method receives a [param file_path],
+## a [param partition_id] and a [param file_format], all of which are
+## [String]s, and returns another [String] representing the name of the
+## partition represented by those data. [br]
+## The partition name here refers to the file name of the partition with
+## the format suffix. [br]
+## [b]Example:[/b]
+## [codeblock]
+## var partition_name: String = _get_partition_name(
+##   "res://saves/file_1", "partition_1", "sav"
+## )
+## # This would return "partition_1.sav"
+## [/codeblock]
+## In the case the [param partition_id] is an empty [String], this method
+## considers it as being a partition with the same name as its file, so
+## in the previous example, if the [param partition_id] was [code]""[/code],
+## the result would be [code]"file_1.sav"[/code].
+func _get_partition_name(
+	file_path: String,
+	partition_id: String,
+	file_format: String
+) -> String:
+	var file_name: String = LokFileSystemUtil.get_directory_name(file_path)
+	var partition_name: String = partition_id
+	
+	if partition_name == "":
+		partition_name = file_name
+	
+	partition_name = LokFileSystemUtil.join_file_name(
+		partition_name, file_format
+	)
+	
+	return partition_name
+
+## The [method _filter_data] method receives a [param data]
+## [Dictionary] other parameters that serve as filters
+## for which entries of that [Dictionary] should be kept. [br]
+## The filter parameters are the [param accessor_ids], [param partition_ids] and
+## the [param version_numbers]. All of these are [Array] of [String]s that
+## identify the entries of the [param data] that should be kept in the
+## [Dictionary] returned by this method. [br]
+## To work properly, this method expects that the [param data] parameter
+## follows the structure:
+## [codeblock]
+## {
+##   "accessor_id_1": {
+##     ...
+##     "partition": <String>,
+##     "version": <String> (optional)
+##   },
+##   "accessor_id_n": { ... }
+## }
+## [/codeblock]
+func _filter_data(
+	data: Dictionary,
+	accessor_ids: Array[String] = [],
+	partition_ids: Array[String] = [],
+	version_numbers: Array[String] = []
+) -> Dictionary:
+	var filtered_data: Dictionary = LokUtil.filter_dictionary(
+		data,
+		func(accessor_id: String, accessor_data: Dictionary) -> bool:
+			var accessor_partition: String = accessor_data.get("partition", "")
+			var accessor_version: String = accessor_data.get("version", "")
+			
+			return (
+				LokUtil.filter_value(accessor_ids, accessor_id) and
+				LokUtil.filter_value(partition_ids, accessor_partition) and
+				LokUtil.filter_value(version_numbers, accessor_version)
+			)
+	)
+	
+	return filtered_data
+
+## The [method _append_partition_to_data] method receives a [param data]
+## [Dictionary] and a [param partition_id] [String].
+## The [param data] parameter must be a [Dictionary] with other [Dictionary]s
+## as its values, so that this method can set that
+## [param partition_id] as the value of a [code]"partition"[/code] key
+## in each of those sub dictionaries.
+func _append_partition_to_data(
+	data: Dictionary,
+	partition_id: String
+) -> Dictionary:
+	return LokUtil.map_dictionary(
+		data,
+		func(accessor_id: String, accessor_data: Dictionary) -> Dictionary:
+			accessor_data["partition"] = partition_id
+			
+			return accessor_data
+	)
+
+## The [method _get_file_id] method returns a [String] with the id of
+## a file that has [param file_name] as its name. [br]
+## If the file has no [code]"_"[/code], its entire name is its id, else,
+## its id is considered to be the part after the first [code]"_"[/code].
+func _get_file_id(file_name: String) -> String:
+	var file_parts: PackedStringArray = file_name.split("_", false, 1)
+	
+	if file_parts.size() > 1:
+		return file_parts[1]
+	
+	return file_parts[0]
+
+## The [method _remove_partition] method removes data from the partition
 ## specified by the [param partition_path] parameter.
 ## [br]
 ## At the end, this method returns a [Dictionary] with the data
 ## obtained. The format of that [Dictionary] follows the same
 ## structure as the one returned by the [method remove_data] method.
-func remove_partition(
+func _remove_partition(
 	partition_path: String,
 	accessor_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
 	# Load so that removed data can be returned
-	var result: Dictionary = load_partition(
+	var result: Dictionary = _load_partition(
 		partition_path
 	)
 	
@@ -456,7 +456,7 @@ func remove_partition(
 		LokFileSystemUtil.remove_file_if_exists(partition_path)
 	# Update data with only what should stay
 	else:
-		save_partition(
+		_save_partition(
 			partition_path, result["updated_data"], true
 		)
 	
@@ -464,12 +464,12 @@ func remove_partition(
 	var partition_id: String = LokFileSystemUtil.get_file_prefix(partition_name)
 	
 	# Append partition ids to resultant data
-	append_partition_to_data(result["data"], partition_id)
-	append_partition_to_data(result["updated_data"], partition_id)
+	_append_partition_to_data(result["data"], partition_id)
+	_append_partition_to_data(result["updated_data"], partition_id)
 	
 	return result
 
-## The [method save_partition] method should be overwritten so that it saves
+## The [method _save_partition] method should be overwritten so that it saves
 ## [param data] in the partition specified by the [param partition_path]
 ## parameter. [br]
 ## Optionally, the [param replace] parameter can be passed to tell if the
@@ -485,18 +485,18 @@ func remove_partition(
 ##   "accessor_id_n": { ... },
 ## }
 ## [/codeblock]
-func save_partition(
+func _save_partition(
 	_partition_path: String,
 	_data: Dictionary,
 	_replace: bool = false
 ) -> Dictionary: return {}
 
-## The [method load_partition] method should be overwritten so that it loads
+## The [method _load_partition] method should be overwritten so that it loads
 ## data from the partition specified by the [param partition_path] parameter.
 ## [br]
 ## At the end, this method should return a [Dictionary] with the data
 ## obtained. The format of that [Dictionary] should follow the same
 ## structure as the one returned by the [method load_data] method.
-func load_partition(
+func _load_partition(
 	_partition_path: String
 ) -> Dictionary: return {}

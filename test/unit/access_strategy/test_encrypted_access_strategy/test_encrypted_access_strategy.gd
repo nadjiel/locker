@@ -43,12 +43,12 @@ func after_all() -> void:
 	LokFileSystemUtil.remove_directory_recursive_if_exists(file_path)
 	queue_free()
 
-#region Method save_partition
+#region Method _save_partition
 
 func test_save_partition_returns_new_partition() -> void:
 	var data_to_save: Dictionary = default_accessor1_data
 	
-	var result: Dictionary = strategy.save_partition(partition_path, data_to_save, false)
+	var result: Dictionary = strategy._save_partition(partition_path, data_to_save, false)
 	
 	var expected_result: Dictionary = {
 		"status": Error.OK,
@@ -65,9 +65,9 @@ func test_save_partition_creates_new_partition() -> void:
 		"data": data_to_save
 	}
 	
-	strategy.save_partition(partition_path, data_to_save, false)
+	strategy._save_partition(partition_path, data_to_save, false)
 	
-	var loaded_result: Dictionary = strategy.load_partition(partition_path)
+	var loaded_result: Dictionary = strategy._load_partition(partition_path)
 	
 	assert_eq(loaded_result, expected_result, "Data wasn't saved properly")
 
@@ -80,10 +80,10 @@ func test_save_partition_overwrites_partition() -> void:
 		"data": second_data_to_save
 	}
 	
-	strategy.save_partition(partition_path, first_data_to_save, false)
-	strategy.save_partition(partition_path, second_data_to_save, true)
+	strategy._save_partition(partition_path, first_data_to_save, false)
+	strategy._save_partition(partition_path, second_data_to_save, true)
 	
-	var loaded_result: Dictionary = strategy.load_partition(partition_path)
+	var loaded_result: Dictionary = strategy._load_partition(partition_path)
 	
 	assert_eq(loaded_result, expected_result, "Data wasn't overwritten properly")
 
@@ -96,10 +96,10 @@ func test_save_partition_updates_partition() -> void:
 		"data": first_data_to_save.merged(second_data_to_save)
 	}
 	
-	strategy.save_partition(partition_path, first_data_to_save, false)
-	strategy.save_partition(partition_path, second_data_to_save, false)
+	strategy._save_partition(partition_path, first_data_to_save, false)
+	strategy._save_partition(partition_path, second_data_to_save, false)
 	
-	var loaded_result: Dictionary = strategy.load_partition(partition_path)
+	var loaded_result: Dictionary = strategy._load_partition(partition_path)
 	
 	assert_eq(loaded_result, expected_result, "Data wasn't updated properly")
 
@@ -204,10 +204,10 @@ func test_save_data_updates_data() -> void:
 
 #endregion
 
-#region Method load_partition
+#region Method _load_partition
 
 func test_load_partition_returns_error_not_found() -> void:
-	var result: Dictionary = strategy.load_partition(partition_path)
+	var result: Dictionary = strategy._load_partition(partition_path)
 	
 	var expected_result: Dictionary = {
 		"status": Error.ERR_FILE_NOT_FOUND,
@@ -219,7 +219,7 @@ func test_load_partition_returns_error_not_found() -> void:
 func test_load_partition_returns_error_unrecognized() -> void:
 	LokFileSystemUtil.create_file_if_not_exists(partition_path)
 	
-	var result: Dictionary = strategy.load_partition(partition_path)
+	var result: Dictionary = strategy._load_partition(partition_path)
 	
 	var expected_result: Dictionary = {
 		"status": Error.ERR_FILE_UNRECOGNIZED,
@@ -231,9 +231,9 @@ func test_load_partition_returns_error_unrecognized() -> void:
 func test_load_partition_returns_result() -> void:
 	var data_to_save: Dictionary = default_accessor1_data
 	
-	strategy.save_partition(partition_path, data_to_save, false)
+	strategy._save_partition(partition_path, data_to_save, false)
 	
-	var result: Dictionary = strategy.load_partition(partition_path)
+	var result: Dictionary = strategy._load_partition(partition_path)
 	
 	var expected_loaded_data: Dictionary = data_to_save
 	
@@ -357,16 +357,16 @@ func test_load_data_filters_versions() -> void:
 
 #endregion
 
-#region Method remove_partition
+#region Method _remove_partition
 
 func test_remove_partition_returns_removed_result() -> void:
 	var data_to_save1: Dictionary = default_accessor1_data
 	var data_to_save2: Dictionary = default_accessor2_data
 	
-	strategy.save_partition(partition_path, data_to_save1, false)
-	strategy.save_partition(partition_path, data_to_save2, false)
+	strategy._save_partition(partition_path, data_to_save1, false)
+	strategy._save_partition(partition_path, data_to_save2, false)
 	
-	var result: Dictionary = strategy.remove_partition(partition_path, [], [])
+	var result: Dictionary = strategy._remove_partition(partition_path, [], [])
 	
 	var expected_removed_data: Dictionary = data_to_save1.merged(data_to_save2)
 	expected_removed_data["accessor_id_1"]["partition"] = "partition1"
@@ -383,9 +383,9 @@ func test_remove_partition_returns_removed_result() -> void:
 func test_remove_partition_removes_from_files() -> void:
 	var data_to_save: Dictionary = default_accessor1_data
 	
-	strategy.save_partition(partition_path, data_to_save, false)
+	strategy._save_partition(partition_path, data_to_save, false)
 	
-	strategy.remove_partition(partition_path, [], [])
+	strategy._remove_partition(partition_path, [], [])
 	
 	assert_false(
 		LokFileSystemUtil.file_exists(partition_path),
@@ -396,10 +396,10 @@ func test_remove_partition_filters_accessor_ids() -> void:
 	var data_to_save1: Dictionary = default_accessor1_data
 	var data_to_save2: Dictionary = default_accessor2_data
 	
-	strategy.save_partition(partition_path, data_to_save1, false)
-	strategy.save_partition(partition_path, data_to_save2, false)
+	strategy._save_partition(partition_path, data_to_save1, false)
+	strategy._save_partition(partition_path, data_to_save2, false)
 	
-	var result: Dictionary = strategy.remove_partition(
+	var result: Dictionary = strategy._remove_partition(
 		partition_path, [ "accessor_id_1" ], []
 	)
 	
@@ -421,10 +421,10 @@ func test_remove_partition_filters_version_numbers() -> void:
 	var data_to_save1: Dictionary = default_accessor1_data
 	var data_to_save2: Dictionary = default_accessor2_data
 	
-	strategy.save_partition(partition_path, data_to_save1, false)
-	strategy.save_partition(partition_path, data_to_save2, false)
+	strategy._save_partition(partition_path, data_to_save1, false)
+	strategy._save_partition(partition_path, data_to_save2, false)
 	
-	var result: Dictionary = strategy.remove_partition(
+	var result: Dictionary = strategy._remove_partition(
 		partition_path, [], [ "1.0.0" ]
 	)
 	
@@ -446,10 +446,10 @@ func test_remove_partition_filters_accessor_ids_and_version_numbers() -> void:
 	var data_to_save1: Dictionary = default_accessor1_data
 	var data_to_save2: Dictionary = default_accessor2_data
 	
-	strategy.save_partition(partition_path, data_to_save1, false)
-	strategy.save_partition(partition_path, data_to_save2, false)
+	strategy._save_partition(partition_path, data_to_save1, false)
+	strategy._save_partition(partition_path, data_to_save2, false)
 	
-	var result: Dictionary = strategy.remove_partition(
+	var result: Dictionary = strategy._remove_partition(
 		partition_path, [ "accessor_id_2" ], [ "1.0.0" ]
 	)
 	
@@ -471,14 +471,14 @@ func test_remove_partition_updates_in_file_system() -> void:
 	var data_to_save1: Dictionary = default_accessor1_data
 	var data_to_save2: Dictionary = default_accessor2_data
 	
-	strategy.save_partition(partition_path, data_to_save1, false)
-	strategy.save_partition(partition_path, data_to_save2, false)
+	strategy._save_partition(partition_path, data_to_save1, false)
+	strategy._save_partition(partition_path, data_to_save2, false)
 	
-	strategy.remove_partition(partition_path, [ "accessor_id_1" ], [])
+	strategy._remove_partition(partition_path, [ "accessor_id_1" ], [])
 	
 	var expected_updated_data: Dictionary = data_to_save2
 	
-	var load_result: Dictionary = strategy.load_partition(partition_path)
+	var load_result: Dictionary = strategy._load_partition(partition_path)
 	
 	var expected_result: Dictionary = {
 		"status": Error.OK,

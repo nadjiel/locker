@@ -215,11 +215,11 @@ func is_busy() -> bool:
 ## getting the saved files' ids to be executed
 ## by this [LokAccessExecutor] the sooner the possible. [br]
 ## The parameters of this method and its return are the same of the
-## [method LokAccessStrategy.get_file_ids], with the exception that
+## [method LokAccessStrategy.get_saved_files_ids], with the exception that
 ## this method is asynchronous.
 func request_get_file_ids(files_path: String) -> Dictionary:
 	return await operate(
-		get_file_ids.bind(files_path)
+		get_saved_files_ids.bind(files_path)
 	)
 
 ## The [method request_saving] method queues a saving operation to be executed
@@ -319,14 +319,14 @@ func operate(operation_callable: Callable) -> Dictionary:
 	
 	return result
 
-## The [method get_file_ids] method is responsible for using the
+## The [method get_saved_files_ids] method is responsible for using the
 ## [member access_strategy] to get the file ids of the saved files. [br]
 ## This method is wrapped by the [method request_get_file_ids] method, so that
 ## it can be executed asynchronously. [br]
 ## If you want more information about its parameters and return,
-## see the [method LokAccessStrategy.get_file_ids]
+## see the [method LokAccessStrategy.get_saved_files_ids]
 ## method, which has the same signature.
-func get_file_ids(files_path: String) -> Dictionary:
+func get_saved_files_ids(files_path: String) -> Dictionary:
 	var result: Dictionary = LokAccessStrategy.create_result()
 	result["data"] = []
 	
@@ -336,7 +336,7 @@ func get_file_ids(files_path: String) -> Dictionary:
 		
 		return result
 	
-	result = access_strategy.get_file_ids(files_path)
+	result = access_strategy.get_saved_files_ids(files_path)
 	
 	return result
 

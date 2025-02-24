@@ -2,7 +2,7 @@
 ## implementing encrypted data accessing.
 ## 
 ## This class inherits from the [LokAccessStrategy] in order to implement
-## its [method save_partition] and [method load_partition] methods and
+## its [method _save_partition] and [method _load_partition] methods and
 ## with that provide saving and loading functionalities for
 ## encrypted data. [br]
 ## [br]
@@ -26,14 +26,14 @@ func get_password() -> String:
 func _init(_password: String = "") -> void:
 	password = _password
 
-## The [method save_partition] method overrides its super counterpart
-## [method LokAccessStrategy.save_partition] in order to provide [param data]
+## The [method _save_partition] method overrides its super counterpart
+## [method LokAccessStrategy._save_partition] in order to provide [param data]
 ## saving in a encrypted format. [br]
 ## When finished, this method returns a [Dictionary] with the data it
 ## saved. [br]
 ## To read more about the parameters of this method, see
-## [method LokAccessStrategy.save_partition].
-func save_partition(
+## [method LokAccessStrategy._save_partition].
+func _save_partition(
 	partition_path: String,
 	data: Dictionary,
 	replace: bool = false
@@ -52,7 +52,7 @@ func save_partition(
 	var load_result: Dictionary = {}
 	
 	if not replace:
-		load_result = load_partition(partition_path)
+		load_result = _load_partition(partition_path)
 	
 	# Merge previous and new datas
 	result["data"] = data.merged(load_result.get("data", {}))
@@ -66,14 +66,14 @@ func save_partition(
 	
 	return result
 
-## The [method load_partition] method overrides its super counterpart
-## [method LokAccessStrategy.load_partition] in order to provide encrypted data
+## The [method _load_partition] method overrides its super counterpart
+## [method LokAccessStrategy._load_partition] in order to provide encrypted data
 ## loading. [br]
 ## When finished, this method returns a [Dictionary] with the data it
 ## loaded. [br]
 ## To read more about the parameters of this method and the format of
-## its return, see [method LokAccessStrategy.load_partition].
-func load_partition(
+## its return, see [method LokAccessStrategy._load_partition].
+func _load_partition(
 	partition_path: String
 ) -> Dictionary:
 	var result: Dictionary = create_result()
