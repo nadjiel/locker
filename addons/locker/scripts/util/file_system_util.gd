@@ -427,6 +427,20 @@ static func parse_json_from_string(
 	
 	return json.data
 
+## The [method load_resources] method is a quick way to load all [Resource]s
+## located in a specific [param directory_path].
+static func load_resources(directory_path: String) -> Array[Resource]:
+	var resources: Array[Resource] = []
+	
+	var resource_names: PackedStringArray = get_file_names(directory_path)
+	
+	for resource_name: String in resource_names:
+		var resource_path: String = directory_path.path_join(resource_name)
+		
+		resources.append(load(resource_path))
+	
+	return resources
+
 ## The [method remove_file_if_exists] method uses the
 ## [method file_exists] and [method remove_directory_or_file] methods
 ## to remove a file only if exists. [br]
