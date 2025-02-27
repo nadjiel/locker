@@ -125,10 +125,6 @@ func save_data(
 		
 		result["data"].merge(partition_result["data"])
 	
-	var all_partitions: PackedStringArray = LokFileSystemUtil.get_file_names(
-		file_path, [ file_format ]
-	)
-	
 	return result
 
 ## The [method load_data] method uses the [method _load_partition] method to
