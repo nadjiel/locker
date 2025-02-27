@@ -125,10 +125,6 @@ func save_data(
 		
 		result["data"].merge(partition_result["data"])
 	
-	var all_partitions: PackedStringArray = LokFileSystemUtil.get_file_names(
-		file_path, [ file_format ]
-	)
-	
 	return result
 
 ## The [method load_data] method uses the [method _load_partition] method to
@@ -172,30 +168,23 @@ func load_data(
 		result["status"] = Error.ERR_FILE_NOT_FOUND
 		return result
 	
-	# Get all partitions stored (with file format)
-	var all_partition_names: PackedStringArray = LokFileSystemUtil.get_file_names(
-		file_path,
-		[ file_format ]
+	# Gets the names of the partitions wanted
+	var partition_names: Array[String] = _get_partitions(
+		file_path, file_format, partition_ids
 	)
 	
-	# For each partition stored
-	for partition_name: String in all_partition_names:
-		# Get partition id from its file name
+	# For each partition
+	for partition_name: String in partition_names:
 		var partition_id: String = LokFileSystemUtil.get_file_prefix(
 			partition_name
 		)
-		
-		# Filter out unwanted partitions
-		if not LokUtil.filter_value(partition_ids, partition_id):
-			continue
-		
 		var partition_path: String = file_path.path_join(partition_name)
 		
 		var partition_result: Dictionary = _load_partition(
 			partition_path
 		)
 		
-		result["status"] = partition_result["status"]
+		result["status"] = partition_result.get("status", Error.ERR_UNCONFIGURED)
 		
 		# Don't load this partition if error appears
 		if result["status"] != Error.OK:
@@ -213,7 +202,7 @@ func load_data(
 		return result
 	
 	var filtered_data: Dictionary = _filter_data(
-		result["data"], accessor_ids, partition_ids, version_numbers
+		result["data"], accessor_ids, [], version_numbers
 	)
 	
 	result["data"] = filtered_data
@@ -267,29 +256,23 @@ func remove_data(
 		result["status"] = Error.ERR_FILE_NOT_FOUND
 		return result
 	
-	# Get all partitions stored (with file format)
-	var all_partitions: PackedStringArray = LokFileSystemUtil.get_file_names(
-		file_path,
-		[ file_format ]
+	# Gets the names of the partitions wanted
+	var partition_names: Array[String] = _get_partitions(
+		file_path, file_format, partition_ids
 	)
 	
-	# For each partition stored
-	for partition_name: String in all_partitions:
+	# For each partition
+	for partition_name: String in partition_names:
 		var partition_id: String = LokFileSystemUtil.get_file_prefix(
 			partition_name
 		)
-		
-		# Filter out unwanted partitions
-		if not LokUtil.filter_value(partition_ids, partition_id):
-			continue
-		
 		var partition_path: String = file_path.path_join(partition_name)
 		
 		var partition_result: Dictionary = _remove_partition(
 			partition_path, accessor_ids, version_numbers
 		)
 		
-		result["status"] = partition_result["status"]
+		result["status"] = partition_result.get("status", Error.ERR_UNCONFIGURED)
 		
 		# Cancel loading if error appears
 		if result["status"] != Error.OK:
@@ -337,6 +320,34 @@ func _get_partition_name(
 	)
 	
 	return partition_name
+
+## The [method _get_partitions] method searches the names of the
+## partitions in a given [param file_path] with a specific [param file_format].
+## [br]
+## Only the partitions with id specified in the [param wanted_ids] are brought
+## in the result. If that parameter in empty, though, all partitions found
+## are returned.
+func _get_partitions(
+	file_path: String,
+	file_format: String,
+	wanted_ids: Array[String] = []
+) -> Array[String]:
+	var partition_names: Array[String] = []
+	
+	# Get partition names from all saved partitions
+	if wanted_ids.is_empty():
+		partition_names.assign(LokFileSystemUtil.get_file_names(
+			file_path,
+			[ file_format ]
+		))
+	# Get only wanted partition names
+	else:
+		partition_names.assign(wanted_ids.map(
+			func(id: String) -> String:
+				return _get_partition_name(file_path, id, file_format)
+		))
+	
+	return partition_names
 
 ## The [method _filter_data] method receives a [param data]
 ## [Dictionary] other parameters that serve as filters
