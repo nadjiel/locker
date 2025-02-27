@@ -402,8 +402,12 @@ func consume_data(data: Dictionary) -> void:
 ## If no such version is found, [code]null[/code] is returned.
 func _find_version(number: String) -> LokStorageAccessorVersion:
 	for version_i: LokStorageAccessorVersion in versions:
-		if version_i.number == number:
-			return version_i
+		if version_i == null:
+			continue
+		if version_i.number != number:
+			continue
+		
+		return version_i
 	
 	return null
 
@@ -416,6 +420,11 @@ func _find_latest_version() -> LokStorageAccessorVersion:
 		prev: LokStorageAccessorVersion,
 		next: LokStorageAccessorVersion
 	) -> LokStorageAccessorVersion:
+		if prev == null:
+			return next
+		if next == null:
+			return prev
+		
 		if LokStorageAccessorVersion.compare_versions(prev, next) == 1:
 			return prev
 		else:
