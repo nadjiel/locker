@@ -151,7 +151,7 @@ func collect_data(
 	accessor.set_version_number(version_number)
 	
 	var accessor_version: String = accessor.get_version_number()
-	var accessor_data: Dictionary = accessor.retrieve_data()
+	var accessor_data: Dictionary = await accessor.retrieve_data()
 	
 	if accessor_data.is_empty():
 		return {}
@@ -203,7 +203,7 @@ func gather_data(
 		if not LokUtil.filter_value(included_accessors, accessor):
 			continue
 		
-		var accessor_data: Dictionary = collect_data(accessor, version_number)
+		var accessor_data: Dictionary = await collect_data(accessor, version_number)
 		
 		if accessor_data.is_empty():
 			continue
@@ -261,7 +261,7 @@ func distribute_result(
 		var accessor_version: String = accessor_data.get("version", "")
 		
 		accessor.set_version_number(accessor_version)
-		accessor.consume_data(accessor_result.duplicate(true))
+		await accessor.consume_data(accessor_result.duplicate(true))
 
 ## The [method get_saved_files_ids] method returns an [Array] of [String]s
 ## with the ids of all files saved in the [member saves_directory].
@@ -290,9 +290,9 @@ func save_data(
 	var file_path: String = _get_file_path(file_id)
 	var file_format: String = save_files_format
 	
-	var data: Dictionary = gather_data(included_accessors, version_number)
-	
 	saving_started.emit()
+	
+	var data: Dictionary = await gather_data(included_accessors, version_number)
 	
 	var result: Dictionary = await _access_executor.request_saving(
 		file_path, file_format, data, replace
@@ -332,7 +332,7 @@ func load_data(
 		version_numbers
 	)
 	
-	distribute_result(result, included_accessors)
+	await distribute_result(result, included_accessors)
 	
 	loading_finished.emit(result)
 	
