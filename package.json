@@ -4,6 +4,7 @@
   "godotVersion": "4.3",
   "repository": "https://github.com/locker-godot/locker",
   "scripts": {
+    "install": "touch node_modules/.gdignore",
     "change": "changeset add",
     "version": "changeset version && node dev/version.js",
     "build": "node dev/build.js",
