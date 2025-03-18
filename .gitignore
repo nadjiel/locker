@@ -23,3 +23,6 @@ mono_crash.*.json
 
 # NodeJS ignores
 node_modules/
+
+# Build ignores
+build/
