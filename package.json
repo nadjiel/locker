@@ -3,7 +3,13 @@
   "version": "1.1.0",
   "godotVersion": "4.3",
   "repository": "https://github.com/locker-godot/locker",
-  "scripts": {},
+  "scripts": {
+    "change": "changeset add",
+    "version": "changeset version && node dev/version.js",
+    "build": "node dev/build.js",
+    "prepublish": "npm run build",
+    "publish": "node dev/publish.js && changeset publish"
+  },
   "license": "MIT",
   "private": true,
   "type": "module",
