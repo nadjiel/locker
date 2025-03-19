@@ -34,6 +34,20 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # Get new release versions in format "packageOne@x.y.z, packageTwo@x.y.z"
+      # Since this project only has the locker package, the output is something like "locker@x.y.z"
+      - name: Get new versions
+        run: |
+          npx @changesets/cli status --output=release.json || true
+
+          if [ ! -f "release.json" ]; then
+            exit 0
+          fi
+          
+          echo "CHANGED_PACKAGES=$(jq -r '.releases | map(.name + "@" + .newVersion) | join(", ")' release.json)" >> "$GITHUB_ENV"
+
+          rm release.json
+
       # Uses package.json scripts to create a version PR or build a release
       - name: Create Release Pull Request or Publish
         id: changesets
@@ -41,8 +55,8 @@ jobs:
         with:
           version: npm run version
           publish: npm run publish
-          commit: ":rocket: release: created new release"
-          title: Created new release
+          commit: ":rocket: release: ${{ env.CHANGED_PACKAGES }}"
+          title: Created release ${{ env.CHANGED_PACKAGES }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
