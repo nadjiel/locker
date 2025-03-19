@@ -6,6 +6,7 @@ import {
   PLUGIN_PATH,
   README_PATH,
   LICENSE_PATH,
+  CHANGELOG_PATH,
   getPackageJson,
   getPluginCfg,
   getPluginField,
@@ -32,6 +33,26 @@ function updateAddonFiles() {
   });
 }
 
+function removeOldChangelogs() {
+  if(!fs.existsSync(CHANGELOG_PATH)) {
+    return;
+  }
+
+  const changelog = fs.readFileSync(CHANGELOG_PATH, "utf-8");
+
+  const sections = changelog.split(/^## /m);
+
+  if(sections.length < 3) {
+    return;
+  }
+  
+  const updatedChangelog = sections.slice(0, 2).join('## ');
+
+  fs.writeFileSync(CHANGELOG_PATH, updatedChangelog);
+  
+  console.log("Truncated CHANGELOG.md to keep only latest version.");
+}
+
 function main() {
   const packageJson = getPackageJson();
   const pluginCfg = getPluginCfg();
@@ -54,6 +75,8 @@ function main() {
   console.log(`Updated plugin.cfg version: ${packageVersion}`)
   
   updateAddonFiles();
+
+  removeOldChangelogs();
 }
 
 main();
