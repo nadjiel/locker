@@ -21,6 +21,8 @@ export const BUILD_PATH = "build/";
 
 export const ASSET_TEMPLATE_PATH = path.join(BUILD_PATH, "asset-template.json.hb");
 
+export const CHANGELOG_PATH = "CHANGELOG.md";
+
 /**
  * Map of category names and IDs used in the Godot Asset Library.
  */
